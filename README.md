@@ -9,6 +9,70 @@ This repo is also a learning project to practice:
 
 ---
 
+## Quick Start
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run the web app
+pnpm dev:web
+
+# Run all apps in dev mode
+pnpm dev
+
+# Build all apps
+pnpm build
+```
+
+---
+
+## Monorepo Structure
+
+This is a [Turborepo](https://turbo.build/) monorepo using [pnpm](https://pnpm.io/) workspaces.
+
+```
+workforce-board/
+├── apps/
+│   ├── web/           # Frontend (Vite + React + TypeScript)
+│   └── api/           # Backend API (placeholder)
+├── packages/
+│   └── shared/        # Shared types and utilities
+├── turbo.json         # Turborepo pipeline config
+├── pnpm-workspace.yaml
+└── package.json       # Root workspace config
+```
+
+### Apps
+
+| Package | Description | Status |
+|---------|-------------|--------|
+| `@workforce/web` | React frontend with drag-and-drop roster board | Active |
+| `@workforce/api` | Backend API for persistence and multi-user | Placeholder |
+
+### Packages
+
+| Package | Description |
+|---------|-------------|
+| `@workforce/shared` | Shared TypeScript types (Tag, Category, RosterDay, etc.) |
+
+---
+
+## Available Scripts
+
+From the root directory:
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Run all apps in development mode |
+| `pnpm dev:web` | Run only the web app |
+| `pnpm dev:api` | Run only the API |
+| `pnpm build` | Build all apps |
+| `pnpm typecheck` | Type-check all packages |
+| `pnpm lint` | Lint all packages |
+
+---
+
 ## What this is (product definition)
 
 **Daily Roster Board**: for a given **day**, supervisors allocate **people and assets** to **locations** across predefined **work categories** (e.g., Personnel, Plant, Traffic Control, Contractors, Leave).
@@ -24,7 +88,7 @@ Owns the roster for the day.
 - Select date
 - Allocate team members and assets to locations/categories
 - Edit and move allocations during the day
-- “Send” the roster for distribution (locks the day)
+- "Send" the roster for distribution (locks the day)
 
 ### Team Member (Secondary)
 Consumes the output.
@@ -42,8 +106,8 @@ Manages master data.
 
 ## Domain definitions
 
-- **Roster Day**: a single date’s board (Draft → Sent → Archived).
-- **Location**: a row on the board (e.g., “Cameron Town”).
+- **Roster Day**: a single date's board (Draft → Sent → Archived).
+- **Location**: a row on the board (e.g., "Cameron Town").
 - **Work Category**: a column on the board (e.g., Personnel, Plant). Seeded reference data in V1.
 - **Team Member**: a person tag (yellow tags in UI).
 - **Asset**: a plant/vehicle/equipment tag (green tags in UI).
@@ -58,7 +122,7 @@ Manages master data.
 - Render grid (Locations × Work Categories)
 - Create/remove assignments by placing tags into cells
 - Persist and reload assignments for the selected date
-- Basic “Send” action: marks roster as Sent (prevents silent edits)
+- Basic "Send" action: marks roster as Sent (prevents silent edits)
 
 ### Manage Roster (Master Data Modal)
 - Team Members: add/remove (soft delete)
@@ -70,7 +134,7 @@ Manages master data.
 - Date-scoped data model
 
 ### Distribution
-- “Send” transitions roster day to `Sent`
+- "Send" transitions roster day to `Sent`
 - Records `SentAt` + `SentBy`
 
 ---
@@ -145,7 +209,7 @@ Outcome: working UI deployed via CI/CD.
 Outcome: supervisors can run the day from the tool.
 - persisted master data + assignments
 - roster day status (Draft/Sent)
-- “Manage” modal CRUD
+- "Manage" modal CRUD
 
 ### V2 — Operational Hardening
 - activity feed / audit view
@@ -155,9 +219,6 @@ Outcome: supervisors can run the day from the tool.
 
 ---
 
-## Next Actions
-1. Create GitHub Issues for V0 + V1
-2. Scaffold the app and deploy V0
-3. Implement schema + CRUD for V1
+## License
 
-Test Commit
+MIT - see [LICENSE](./LICENSE)
