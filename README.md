@@ -221,4 +221,6 @@ Outcome: supervisors can run the day from the tool.
 
 ## License
 
-MIT - see [LICENSE](./LICENSE)
+AGPL-3.0 - see [LICENSE](./LICENSE)
+
+This means you can use, modify, and distribute this software, but if you run a modified version as a network service, you must make your source code available to users.
