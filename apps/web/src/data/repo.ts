@@ -8,6 +8,7 @@
 import type { IsoDate, JobSite, Resource } from '@workforce/shared';
 import type { BoardData, PlacementInput, WeekData } from './types';
 import type { CopyPlan } from './copyForward';
+import type { LeaveImportPlan } from './leaveImport';
 
 export interface PlannerRepo {
   // Reads
@@ -27,6 +28,11 @@ export interface PlannerRepo {
   // Writes (append-only for assignments)
   place(input: PlacementInput): Promise<void>;
   setLeave(resourceId: string, date: IsoDate, onLeave: boolean): Promise<void>;
+
+  // Leave (full-day, §4.8): date range + bulk/CSV import (plan then commit)
+  setLeaveRange(resourceId: string, start: IsoDate, end: IsoDate, onLeave: boolean): Promise<void>;
+  planLeaveImport(text: string): Promise<LeaveImportPlan>;
+  commitLeaveImport(plan: LeaveImportPlan): Promise<void>;
 
   // Master-data CRUD (never hard-delete — active flag / complete status only, §3/§6)
   addResource(input: Omit<Resource, 'id'>): Promise<Resource>;

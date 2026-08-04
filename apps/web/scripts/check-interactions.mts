@@ -96,4 +96,30 @@ await repo.updateJobSite(njs.id, { status: 'complete' });
 assert.equal((await repo.listAllJobSites()).find((s) => s.id === njs.id)!.status, 'complete', 'CRUD: job site marked complete');
 assert(!(await repo.getBoard('2026-08-04')).sites.some((s) => s.site.id === njs.id), 'CRUD: complete site off the board');
 
-console.log('OK — #6 interactions + resolver + #9 copy-forward + #11 CRUD verified');
+// --- leave import (#10) ---
+const { buildLeaveImportPlan, normalizeDate } = await import('../src/data/leaveImport');
+assert.equal(normalizeDate('11/08/2026'), '2026-08-11', 'DD/MM/YYYY parsed');
+assert.equal(normalizeDate('2026-08-11'), '2026-08-11', 'ISO parsed');
+assert.equal(normalizeDate('not a date'), null, 'bad date rejected');
+
+const ls = seed(date);
+const leaveText = [
+  'Chris Chamberlain, 2026-08-11, 2026-08-13', // 3-day range
+  'Sam Tan, 11/08/2026',                        // single day, DD/MM/YYYY
+  'Unknown Person, 2026-08-11',                 // unmatched name
+].join('\n');
+const lplan = buildLeaveImportPlan(ls.resources, leaveText);
+assert.equal(lplan.days.filter((d) => d.resourceId === 'r-chris').length, 3, 'import: Chris 3 days');
+assert(lplan.days.some((d) => d.resourceId === 'r-sam' && d.date === '2026-08-11'), 'import: Sam DD/MM/YYYY day');
+assert.equal(lplan.unmatched.length, 1, 'import: 1 unmatched');
+assert(lplan.unmatched[0].reason === 'name not found', 'import: unmatched reason');
+
+// setLeaveRange via repo, then getBoard reflects it.
+const lrepo = new InMemoryPlannerRepo();
+await lrepo.setLeaveRange('r-nathan', '2026-08-11', '2026-08-12', true);
+assert((await lrepo.getBoard('2026-08-11')).leave.some((r) => r.id === 'r-nathan'), 'range: Nathan on leave day 1');
+assert((await lrepo.getBoard('2026-08-12')).leave.some((r) => r.id === 'r-nathan'), 'range: Nathan on leave day 2');
+await lrepo.setLeaveRange('r-nathan', '2026-08-11', '2026-08-12', false);
+assert(!(await lrepo.getBoard('2026-08-11')).leave.some((r) => r.id === 'r-nathan'), 'range: cleared');
+
+console.log('OK — #6 + resolver + #9 copy + #11 CRUD + #10 leave-import verified');

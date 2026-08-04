@@ -14,6 +14,8 @@ import type { BoardData, PlacementInput, WeekData } from './types';
 import { buildBoard } from './buildBoard';
 import { buildWeek } from './buildWeek';
 import { buildCopyPlan, buildCopyWeekPlan, type CopyPlan } from './copyForward';
+import { buildLeaveImportPlan, type LeaveImportPlan } from './leaveImport';
+import { addDays, format } from 'date-fns';
 import { seed, type SeedState } from './seed';
 
 const STORAGE_KEY = 'planner-inmemory-v1';
@@ -120,6 +122,34 @@ export class InMemoryPlannerRepo implements PlannerRepo {
       (l) => !(l.resourceId === resourceId && l.date === date),
     );
     if (onLeave) this.state.leave.push({ resourceId, date, source: 'manual' });
+    this.save();
+  }
+
+  async setLeaveRange(resourceId: string, start: IsoDate, end: IsoDate, onLeave: boolean): Promise<void> {
+    const dates: string[] = [];
+    let cur = new Date(`${start}T00:00:00`);
+    const last = new Date(`${end}T00:00:00`);
+    for (let i = 0; i <= 366 && cur <= last; i++) {
+      dates.push(format(cur, 'yyyy-MM-dd'));
+      cur = addDays(cur, 1);
+    }
+    const set = new Set(dates);
+    this.state.leave = this.state.leave.filter(
+      (l) => !(l.resourceId === resourceId && set.has(l.date)),
+    );
+    if (onLeave) for (const date of dates) this.state.leave.push({ resourceId, date, source: 'manual' });
+    this.save();
+  }
+
+  async planLeaveImport(text: string): Promise<LeaveImportPlan> {
+    return buildLeaveImportPlan(this.state.resources, text);
+  }
+
+  async commitLeaveImport(plan: LeaveImportPlan): Promise<void> {
+    for (const d of plan.days) {
+      const exists = this.state.leave.some((l) => l.resourceId === d.resourceId && l.date === d.date);
+      if (!exists) this.state.leave.push({ resourceId: d.resourceId, date: d.date, source: 'import' });
+    }
     this.save();
   }
 

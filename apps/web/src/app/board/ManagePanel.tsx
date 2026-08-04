@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DEFAULT_CREW, type JobSite, type Resource, type ResourceType } from '@workforce/shared';
 import { useRepo } from '@/data/RepoContext';
+import { LeaveTab } from './LeaveTab';
 
 const TYPES: ResourceType[] = ['person', 'plant', 'hire', 'contractor'];
 const TYPE_ORDER: Record<ResourceType, number> = { person: 0, plant: 1, hire: 2, contractor: 3 };
@@ -10,7 +11,7 @@ const input = 'rounded border border-slate-300 px-2 py-1 text-sm';
  *  go complete; nothing is hard-deleted (§3/§6 history). */
 export function ManagePanel({ onClose }: { onClose: () => void }) {
   const repo = useRepo();
-  const [tab, setTab] = useState<'resources' | 'sites'>('resources');
+  const [tab, setTab] = useState<'resources' | 'sites' | 'leave'>('resources');
   const [resources, setResources] = useState<Resource[]>([]);
   const [sites, setSites] = useState<JobSite[]>([]);
 
@@ -45,9 +46,9 @@ export function ManagePanel({ onClose }: { onClose: () => void }) {
       <div className="flex max-h-[85vh] w-full max-w-3xl flex-col rounded-xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-slate-200 p-4">
           <div className="flex items-center gap-2">
-            {(['resources', 'sites'] as const).map((t) => (
+            {(['resources', 'sites', 'leave'] as const).map((t) => (
               <button key={t} onClick={() => setTab(t)} className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${tab === t ? 'bg-slate-800 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
-                {t === 'resources' ? 'Resources' : 'Job sites'}
+                {t === 'resources' ? 'Resources' : t === 'sites' ? 'Job sites' : 'Leave'}
               </button>
             ))}
           </div>
@@ -55,7 +56,7 @@ export function ManagePanel({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="min-h-0 flex-1 overflow-auto p-4">
-          {tab === 'resources' ? (
+          {tab === 'resources' && (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
                 <input value={rName} onChange={(e) => setRName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && addResource()} placeholder="Name (e.g. 188 Ute)" className={`${input} flex-1`} />
@@ -80,7 +81,8 @@ export function ManagePanel({ onClose }: { onClose: () => void }) {
                 ))}
               </div>
             </div>
-          ) : (
+          )}
+          {tab === 'sites' && (
             <div className="space-y-3">
               <div className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
                 <input value={sName} onChange={(e) => setSName(e.target.value)} placeholder="Job site name" className={`${input} flex-1`} />
@@ -102,6 +104,7 @@ export function ManagePanel({ onClose }: { onClose: () => void }) {
               </div>
             </div>
           )}
+          {tab === 'leave' && <LeaveTab resources={resources.filter((r) => r.active)} />}
         </div>
 
         <div className="border-t border-slate-200 p-3 text-right">
