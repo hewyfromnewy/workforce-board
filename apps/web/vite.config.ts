@@ -16,4 +16,13 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        // Main app plus the image-export spike (#4) as a second entry.
+        main: path.resolve(__dirname, 'index.html'),
+        spike: path.resolve(__dirname, 'spike.html'),
+      },
+    },
+  },
 })
