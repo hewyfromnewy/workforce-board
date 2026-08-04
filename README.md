@@ -77,6 +77,43 @@ Supabase-direct.
 
 ---
 
+## Deploy (Cloudflare Pages)
+
+The web app currently runs **DB-free** — all state lives in the browser
+(localStorage) — so it deploys as a plain static site with no backend. This is
+enough to put in front of Roger to evaluate. (Shared, server-persisted data
+comes later via the Worker API + Neon; see [ADR 0001](docs/adr/0001-tech-stack.md).)
+
+### Option A — Git integration (recommended)
+
+In the Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git**,
+pick this repo and set:
+
+| Setting | Value |
+|---|---|
+| Production branch | your deploy branch (e.g. `main`) |
+| Framework preset | None |
+| Build command | `pnpm --filter @workforce/web build` |
+| Build output directory | `apps/web/dist` |
+| Root directory | `/` (repo root — needed for the pnpm workspace) |
+
+Node version is pinned by `.node-version` (20); pnpm is auto-detected from
+`pnpm-lock.yaml` / the `packageManager` field. Every push to the production
+branch redeploys; other branches get preview URLs.
+
+### Option B — one-off upload
+
+```bash
+pnpm --filter @workforce/web build
+pnpm dlx wrangler pages deploy apps/web/dist --project-name workforce-board
+```
+
+> Note: DB-free means each viewer's edits live only in *their* browser. That's
+> fine for evaluation; it is not shared or backed up. Persisted, shared data is
+> issue #2 (Worker API + Neon), which needs `*.neon.tech` network egress opened.
+
+---
+
 ## Available Scripts
 
 From the root directory:
