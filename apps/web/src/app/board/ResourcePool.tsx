@@ -1,4 +1,4 @@
-import type { Resource } from '@workforce/shared';
+import type { AssignmentSlot, Resource } from '@workforce/shared';
 import { ResourceTag } from './ResourceTag';
 import { Drop } from './DropZone';
 
@@ -8,7 +8,7 @@ export function ResourcePool({
   onDropResource,
 }: {
   resources: Resource[];
-  onDropResource: (resourceId: string) => void;
+  onDropResource: (resourceId: string, slot: AssignmentSlot) => void;
 }) {
   return (
     <Drop

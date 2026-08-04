@@ -4,6 +4,8 @@ import type { AssignmentSlot, Resource, ResourceType } from '@workforce/shared';
 export const RESOURCE_DND = 'RESOURCE';
 export interface ResourceDragItem {
   resourceId: string;
+  /** The slot being dragged (a placed half carries 'am'/'pm'); defaults to 'full'. */
+  slot: AssignmentSlot;
 }
 
 const COLORS: Record<ResourceType, string> = {
@@ -17,10 +19,10 @@ export function ResourceTag({ resource, slot }: { resource: Resource; slot?: Ass
   const [{ isDragging }, drag] = useDrag(
     () => ({
       type: RESOURCE_DND,
-      item: { resourceId: resource.id } as ResourceDragItem,
+      item: { resourceId: resource.id, slot: slot ?? 'full' } as ResourceDragItem,
       collect: (m) => ({ isDragging: m.isDragging() }),
     }),
-    [resource.id],
+    [resource.id, slot],
   );
 
   return (

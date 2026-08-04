@@ -40,6 +40,7 @@ export function buildBoard(date: IsoDate, state: SeedState): BoardData {
   for (const p of current) {
     const resource = byId.get(p.resourceId);
     if (!resource || !resource.active) continue;
+    if (leaveIds.has(p.resourceId)) continue; // leave takes precedence over any placement
     if (p.destinationType === 'job_site' && p.destinationId) {
       const row = rows.get(p.destinationId);
       if (row) {
