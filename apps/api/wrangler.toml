@@ -1,0 +1,7 @@
+# Cloudflare Workers config for @workforce/api (ADR 0001).
+# DATABASE_URL is NOT stored here — set it as a secret:
+#   pnpm --filter @workforce/api exec wrangler secret put DATABASE_URL
+name = "workforce-api"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
