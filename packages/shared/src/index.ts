@@ -7,5 +7,8 @@
 // LeaveRecord). This is the foundation — prefer importing from here.
 export * from './domain';
 
+// Append-only assignment projection (current state derived from history).
+export * from './projection';
+
 // Legacy Figma-export UI types (Tag/Category), kept during the migration (#1).
 export * from './types';

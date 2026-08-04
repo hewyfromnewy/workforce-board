@@ -1,18 +1,16 @@
+import { useState } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { MultiBackend, MouseTransition, TouchTransition } from 'react-dnd-multi-backend';
-import { RosterBoard } from '@/app/components/RosterBoard';
-import { Toaster } from 'sonner';
+import { format } from 'date-fns';
+import { RepoProvider } from '@/data/RepoContext';
+import { BoardHeader } from '@/app/board/BoardHeader';
+import { DailyBoard } from '@/app/board/DailyBoard';
 
-// Configure multi-backend for both mouse and touch support
 const HTML5toTouch = {
   backends: [
-    {
-      id: 'html5',
-      backend: HTML5Backend,
-      transition: MouseTransition,
-    },
+    { id: 'html5', backend: HTML5Backend, transition: MouseTransition },
     {
       id: 'touch',
       backend: TouchBackend,
@@ -24,12 +22,16 @@ const HTML5toTouch = {
 };
 
 export default function App() {
+  const [date, setDate] = useState<string>(() => format(new Date(), 'yyyy-MM-dd'));
+
   return (
     <DndProvider backend={MultiBackend} options={HTML5toTouch}>
-      <div className="size-full bg-gray-50">
-        <RosterBoard />
-        <Toaster position="top-right" />
-      </div>
+      <RepoProvider>
+        <div className="min-h-screen bg-slate-50 p-4 md:p-6">
+          <BoardHeader date={date} onDateChange={setDate} />
+          <DailyBoard date={date} />
+        </div>
+      </RepoProvider>
     </DndProvider>
   );
 }
