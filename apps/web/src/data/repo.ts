@@ -6,12 +6,13 @@
  * Method shapes mirror the API's read/write split (apps/api/src/db/queries.ts).
  */
 import type { IsoDate, Resource } from '@workforce/shared';
-import type { BoardData, PlacementInput } from './types';
+import type { BoardData, PlacementInput, WeekData } from './types';
 
 export interface PlannerRepo {
   // Reads
   listResources(): Promise<Resource[]>;
   getBoard(date: IsoDate): Promise<BoardData>;
+  getWeek(startDate: IsoDate): Promise<WeekData>;
 
   // Writes (append-only for assignments)
   place(input: PlacementInput): Promise<void>;

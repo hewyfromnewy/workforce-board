@@ -52,3 +52,30 @@ export interface PlacementInput {
 export function destinationTypeOf(d: Destination): DestinationType {
   return d.type;
 }
+
+// --- Weekly grid (source-of-truth view) -----------------------------------
+
+/** One placement within a weekly cell — a full day, or one half of a split. */
+export interface WeekPlacement {
+  slot: AssignmentSlot;
+  kind: DestinationType;
+  /** Job site name, or "Leave"/"Training"; empty for unassigned. */
+  label: string;
+  jobSiteId?: string;
+}
+
+/** A single resource-day cell; 0 placements = free, 2 = an AM/PM split. */
+export interface WeekCell {
+  date: IsoDate;
+  placements: WeekPlacement[];
+}
+
+export interface WeekRow {
+  resource: Resource;
+  cells: WeekCell[];
+}
+
+export interface WeekData {
+  days: IsoDate[];
+  rows: WeekRow[];
+}

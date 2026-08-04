@@ -5,7 +5,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { IsoDate } from '@workforce/shared';
 import type { PlannerRepo } from './repo';
-import type { BoardData, PlacementInput } from './types';
+import type { BoardData, PlacementInput, WeekData } from './types';
 import { InMemoryPlannerRepo } from './inMemoryRepo';
 
 const RepoContext = createContext<PlannerRepo | null>(null);
@@ -64,4 +64,25 @@ export function useBoard(date: IsoDate) {
   }
 
   return { board, loading, place, placeAtSite, sendTo, setLeave, refresh };
+}
+
+/** Read-only weekly grid for the 7 days starting at `startDate`. */
+export function useWeek(startDate: IsoDate) {
+  const repo = useRepo();
+  const [week, setWeek] = useState<WeekData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const latest = useRef(startDate);
+
+  useEffect(() => {
+    latest.current = startDate;
+    setLoading(true);
+    repo.getWeek(startDate).then((data) => {
+      if (latest.current === startDate) {
+        setWeek(data);
+        setLoading(false);
+      }
+    });
+  }, [repo, startDate]);
+
+  return { week, loading };
 }

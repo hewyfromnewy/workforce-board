@@ -1,8 +1,12 @@
 /**
  * Seed data for the in-memory adapter — illustrative, not the board-photo
- * transcription (that's issue #3). Mirrors the export spike, including the
- * split-day Excavator 13T (AM at one site, PM at another).
+ * transcription (that's issue #3). Populates the whole current week so the
+ * weekly grid is meaningful: crews stay on their sites Mon–Fri (most crews
+ * stay on the same job for days), `today` carries the detailed board including
+ * the split-day Excavator 13T (AM at one site, PM at another), and leave spans
+ * multiple days.
  */
+import { addDays, format, startOfWeek } from 'date-fns';
 import type {
   Assignment,
   DayNote,
@@ -23,11 +27,33 @@ export interface SeedState {
   trafficControl: TrafficControl[];
 }
 
-const R = (
-  id: string,
-  name: string,
-  type: Resource['type'],
-): Resource => ({ id, name, type, crew: DEFAULT_CREW, rate: null, active: true });
+const R = (id: string, name: string, type: Resource['type']): Resource => ({
+  id,
+  name,
+  type,
+  crew: DEFAULT_CREW,
+  rate: null,
+  active: true,
+});
+
+const isoAdd = (start: IsoDate, days: number): IsoDate =>
+  format(addDays(new Date(`${start}T00:00:00`), days), 'yyyy-MM-dd');
+
+/** Standard full-day site assignments — the crews' usual home for the week. */
+const HOME: Record<string, string> = {
+  'r-chris': 'js-clarence',
+  'r-dave': 'js-clarence',
+  'r-roller': 'js-clarence',
+  'r-watercart': 'js-clarence',
+  'r-sam': 'js-medowie',
+  'r-luke': 'js-medowie',
+  'r-grader': 'js-medowie',
+  'r-joel': 'js-nelson',
+  'r-paver': 'js-nelson',
+  'r-truck188': 'js-nelson',
+  'r-boral': 'js-nelson',
+  'r-exc13': 'js-clarence',
+};
 
 export function seed(today: IsoDate): SeedState {
   const resources: Resource[] = [
@@ -58,42 +84,60 @@ export function seed(today: IsoDate): SeedState {
   ];
 
   let seq = 0;
-  const at = () => `${today}T00:00:${String(seq++).padStart(2, '0')}.000Z`;
   const a = (
     resourceId: string,
+    date: IsoDate,
     destinationType: Assignment['destinationType'],
     destinationId: string | null,
     slot: Assignment['slot'] = 'full',
   ): Assignment => ({
-    id: `a-${resourceId}-${slot}`,
+    id: `a-${resourceId}-${date}-${slot}`,
     resourceId,
-    date: today,
+    date,
     slot,
     destinationType,
     destinationId,
-    createdAt: at(),
+    // Valid, monotonic ISO timestamp (seconds since the date's midnight).
+    createdAt: new Date(Date.parse(`${date}T00:00:00.000Z`) + seq++ * 1000).toISOString(),
   });
 
-  const assignments: Assignment[] = [
-    a('r-chris', 'job_site', 'js-clarence'),
-    a('r-dave', 'job_site', 'js-clarence'),
-    a('r-exc13', 'job_site', 'js-clarence', 'am'),
-    a('r-roller', 'job_site', 'js-clarence'),
-    a('r-watercart', 'job_site', 'js-clarence'),
-    a('r-sam', 'job_site', 'js-medowie'),
-    a('r-luke', 'job_site', 'js-medowie'),
-    a('r-grader', 'job_site', 'js-medowie'),
-    a('r-exc13', 'job_site', 'js-medowie', 'pm'),
-    a('r-joel', 'job_site', 'js-nelson'),
-    a('r-paver', 'job_site', 'js-nelson'),
-    a('r-truck188', 'job_site', 'js-nelson'),
-    a('r-boral', 'job_site', 'js-nelson'),
-    a('r-priya', 'training', null),
-  ];
+  const monday = format(startOfWeek(new Date(`${today}T00:00:00`), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+  const weekdays = Array.from({ length: 5 }, (_, i) => isoAdd(monday, i));
+  const dates = Array.from(new Set([...weekdays, today]));
 
+  const assignments: Assignment[] = [];
+  for (const date of dates) {
+    if (date === today) {
+      // Detailed board for today, incl. the split-day Excavator.
+      assignments.push(
+        a('r-chris', date, 'job_site', 'js-clarence'),
+        a('r-dave', date, 'job_site', 'js-clarence'),
+        a('r-exc13', date, 'job_site', 'js-clarence', 'am'),
+        a('r-roller', date, 'job_site', 'js-clarence'),
+        a('r-watercart', date, 'job_site', 'js-clarence'),
+        a('r-sam', date, 'job_site', 'js-medowie'),
+        a('r-luke', date, 'job_site', 'js-medowie'),
+        a('r-grader', date, 'job_site', 'js-medowie'),
+        a('r-exc13', date, 'job_site', 'js-medowie', 'pm'),
+        a('r-joel', date, 'job_site', 'js-nelson'),
+        a('r-paver', date, 'job_site', 'js-nelson'),
+        a('r-truck188', date, 'job_site', 'js-nelson'),
+        a('r-boral', date, 'job_site', 'js-nelson'),
+        a('r-priya', date, 'training', null),
+      );
+    } else {
+      for (const [resourceId, siteId] of Object.entries(HOME)) {
+        assignments.push(a(resourceId, date, 'job_site', siteId));
+      }
+      assignments.push(a('r-priya', date, 'training', null));
+    }
+  }
+
+  // Leave: Terry all week; Rod Thu–Fri.
   const leave: LeaveRecord[] = [
-    { resourceId: 'r-rod', date: today, source: 'manual' },
-    { resourceId: 'r-terry', date: today, source: 'manual' },
+    ...weekdays.map((date) => ({ resourceId: 'r-terry', date, source: 'manual' as const })),
+    { resourceId: 'r-rod', date: isoAdd(monday, 3), source: 'manual' },
+    { resourceId: 'r-rod', date: isoAdd(monday, 4), source: 'manual' },
   ];
 
   const dayNotes: DayNote[] = [

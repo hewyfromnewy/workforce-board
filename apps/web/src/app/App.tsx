@@ -3,10 +3,11 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { MultiBackend, MouseTransition, TouchTransition } from 'react-dnd-multi-backend';
-import { format } from 'date-fns';
+import { format, startOfWeek } from 'date-fns';
 import { RepoProvider } from '@/data/RepoContext';
-import { BoardHeader } from '@/app/board/BoardHeader';
+import { BoardHeader, type BoardView } from '@/app/board/BoardHeader';
 import { DailyBoard } from '@/app/board/DailyBoard';
+import { WeeklyGrid } from '@/app/board/WeeklyGrid';
 
 const HTML5toTouch = {
   backends: [
@@ -23,13 +24,15 @@ const HTML5toTouch = {
 
 export default function App() {
   const [date, setDate] = useState<string>(() => format(new Date(), 'yyyy-MM-dd'));
+  const [view, setView] = useState<BoardView>('weekly');
+  const weekStart = format(startOfWeek(new Date(`${date}T00:00:00`), { weekStartsOn: 1 }), 'yyyy-MM-dd');
 
   return (
     <DndProvider backend={MultiBackend} options={HTML5toTouch}>
       <RepoProvider>
         <div className="min-h-screen bg-slate-50 p-4 md:p-6">
-          <BoardHeader date={date} onDateChange={setDate} />
-          <DailyBoard date={date} />
+          <BoardHeader date={date} onDateChange={setDate} view={view} onViewChange={setView} />
+          {view === 'weekly' ? <WeeklyGrid startDate={weekStart} /> : <DailyBoard date={date} />}
         </div>
       </RepoProvider>
     </DndProvider>

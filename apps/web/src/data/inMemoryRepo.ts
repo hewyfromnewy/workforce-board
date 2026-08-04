@@ -10,8 +10,9 @@
  */
 import type { IsoDate, Resource } from '@workforce/shared';
 import type { PlannerRepo } from './repo';
-import type { BoardData, PlacementInput } from './types';
+import type { BoardData, PlacementInput, WeekData } from './types';
 import { buildBoard } from './buildBoard';
+import { buildWeek } from './buildWeek';
 import { seed, type SeedState } from './seed';
 
 const STORAGE_KEY = 'planner-inmemory-v1';
@@ -56,6 +57,10 @@ export class InMemoryPlannerRepo implements PlannerRepo {
 
   async getBoard(date: IsoDate): Promise<BoardData> {
     return buildBoard(date, this.state);
+  }
+
+  async getWeek(startDate: IsoDate): Promise<WeekData> {
+    return buildWeek(startDate, this.state);
   }
 
   async place(input: PlacementInput): Promise<void> {
