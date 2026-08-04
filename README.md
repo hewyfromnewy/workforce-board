@@ -54,7 +54,26 @@ workforce-board/
 
 | Package | Description |
 |---------|-------------|
-| `@workforce/shared` | Shared TypeScript types (Tag, Category, RosterDay, etc.) |
+| `@workforce/shared` | Shared v1 domain types (Resource, JobSite, Assignment, DayNote, TrafficControl, LeaveRecord) |
+
+---
+
+## Tech Stack
+
+Chosen for v1 in [ADR 0001](docs/adr/0001-tech-stack.md). Sized for a single
+editor and ~20 image-only consumers, it runs entirely on free tiers ($0/month).
+
+| Layer | Choice |
+|-------|--------|
+| Frontend | Vite + React + TypeScript + Tailwind/shadcn (static SPA) |
+| Database | [Neon](https://neon.tech) — serverless Postgres |
+| API | [Hono](https://hono.dev) on Cloudflare Workers |
+| ORM / migrations | [Drizzle](https://orm.drizzle.team) + Drizzle Kit |
+| Hosting | Cloudflare Pages + Workers |
+
+No auth (single-user, single-tenant per spec §9). Assignment history is
+append-only. See the ADR for why Cloudflare over Vercel and API+Neon over
+Supabase-direct.
 
 ---
 
@@ -152,6 +171,11 @@ Explicitly deferred:
 ---
 
 ## Data Model (high-level)
+
+> ⚠️ **Superseded.** The model below is the pre-spec prototype design. The
+> authoritative v1 data model is the six-entity model in the Crew & Plant Planner
+> v1 Specification (§3), implemented in `packages/shared/src/domain.ts`. This
+> section is being reconciled — see issue #1.
 
 **RosterDay**
 - date

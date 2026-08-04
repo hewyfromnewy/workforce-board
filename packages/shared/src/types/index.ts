@@ -1,10 +1,16 @@
 /**
- * Domain types for the Workforce Roster Board application.
- * These types are shared between frontend (web) and backend (api).
+ * Legacy UI types from the Figma-export prototype.
+ *
+ * @deprecated These describe the old vocabulary (member/asset tags dropped into
+ * category columns) and are being migrated onto the v1 domain model in
+ * `../domain.ts` (Resource / JobSite / Assignment / ...). See issue #1. New code
+ * should import from the domain model; these remain only so the existing web app
+ * keeps compiling during the migration.
  */
 
 /**
  * Represents a draggable tag that can be a team member or asset.
+ * @deprecated Superseded by {@link import('../domain').Resource}.
  */
 export interface Tag {
   id: string;
@@ -17,7 +23,8 @@ export interface Tag {
 
 /**
  * Represents a work category column on the roster board.
- * Categories contain tags that have been assigned to them.
+ * @deprecated The board is being remodelled as JobSites (rows) with resource-type
+ * columns; see {@link import('../domain').RESOURCE_TYPE_COLUMNS}.
  */
 export interface Category {
   id: string;
@@ -26,67 +33,9 @@ export interface Category {
 }
 
 /**
- * Status of a roster day.
- */
-export type RosterDayStatus = 'draft' | 'sent' | 'archived';
-
-/**
- * Represents a single day's roster configuration.
- */
-export interface RosterDay {
-  id: string;
-  date: string; // ISO date string
-  status: RosterDayStatus;
-  categories: Category[];
-  locations: string[];
-  holdingTags: Tag[];
-  sentAt?: string;
-  sentBy?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Represents a team member in the system.
- */
-export interface TeamMember {
-  id: string;
-  displayName: string;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Asset types for equipment tracking.
- */
-export type AssetType = 'plant' | 'vehicle' | 'equipment';
-
-/**
- * Represents an asset (equipment, vehicle, plant) in the system.
- */
-export interface Asset {
-  id: string;
-  name: string;
-  assetType: AssetType;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Represents a work location.
- */
-export interface Location {
-  id: string;
-  name: string;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
  * Predefined work category definitions.
+ * @deprecated Use {@link import('../domain').RESOURCE_TYPE_COLUMNS} for the daily
+ * view columns.
  */
 export const DEFAULT_CATEGORIES: Omit<Category, 'tags'>[] = [
   { id: 'personnel', name: 'PERSONNEL' },
