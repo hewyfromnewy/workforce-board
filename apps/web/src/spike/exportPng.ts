@@ -5,13 +5,13 @@
  * styling emits modern CSS color functions (oklch/lab) that plain html2canvas
  * cannot parse — the -pro fork was created to handle them.
  */
-import html2canvas from 'html2canvas-pro';
-
 /** Render an element to a PNG blob at a fixed pixel scale (default 2x for crispness). */
 export async function renderElementToPng(
   el: HTMLElement,
   scale = 2,
 ): Promise<Blob> {
+  // Lazy-load the ~350 KB renderer only when an export actually happens.
+  const { default: html2canvas } = await import('html2canvas-pro');
   const canvas = await html2canvas(el, {
     scale,
     backgroundColor: '#ffffff',

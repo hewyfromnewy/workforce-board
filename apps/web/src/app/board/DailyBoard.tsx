@@ -1,9 +1,12 @@
+import { useRef, useState } from 'react';
 import { RESOURCE_TYPE_COLUMNS, type ResourceType } from '@workforce/shared';
 import { useBoard } from '@/data/RepoContext';
 import type { Placement, SiteRow } from '@/data/types';
+import { renderElementToPng, downloadBlob, copyBlobToClipboard } from '@/spike/exportPng';
 import { ResourceTag } from './ResourceTag';
 import { Drop } from './DropZone';
 import { ResourcePool } from './ResourcePool';
+import { ExportableBoard } from './ExportableBoard';
 
 const GRID = 'minmax(160px, 1.2fr) 1.4fr 1.4fr 0.9fr 1fr 1.2fr';
 
@@ -19,12 +22,36 @@ function TypeCell({ placements }: { placements: Placement[] }) {
 
 export function DailyBoard({ date }: { date: string }) {
   const { board, loading, placeAtSite, sendTo, setLeave } = useBoard(date);
+  const exportRef = useRef<HTMLDivElement>(null);
+  const [shareStatus, setShareStatus] = useState('');
+
+  async function handleShare() {
+    if (!exportRef.current) return;
+    setShareStatus('rendering…');
+    try {
+      const blob = await renderElementToPng(exportRef.current, 2);
+      downloadBlob(blob, `board-${date}.png`);
+      const copied = await copyBlobToClipboard(blob);
+      setShareStatus(`${Math.round(blob.size / 1024)} KB · ${copied ? 'copied + downloaded' : 'downloaded'}`);
+    } catch (e) {
+      setShareStatus(`failed: ${(e as Error).message}`);
+    }
+  }
 
   if (loading || !board) return <div className="p-6 text-slate-500">Loading board…</div>;
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row">
+    <div className="relative flex flex-col gap-4 lg:flex-row">
       <div className="min-w-0 flex-1 space-y-4">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handleShare}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          Share as image
+        </button>
+        <span className="text-sm text-slate-500">{shareStatus}</span>
+      </div>
       <div className="overflow-x-auto rounded-lg border border-slate-300 bg-white shadow-sm">
         <div className="min-w-[900px]">
           {/* Header */}
@@ -87,6 +114,13 @@ export function DailyBoard({ date }: { date: string }) {
       </div>
       </div>
       <ResourcePool resources={board.unassigned} onDropResource={(rid) => sendTo(rid, 'unassigned')} />
+
+      {/* Off-screen, fixed-width render target for the shareable PNG. */}
+      <div aria-hidden className="pointer-events-none absolute -left-[10000px] top-0">
+        <div ref={exportRef}>
+          <ExportableBoard board={board} />
+        </div>
+      </div>
     </div>
   );
 }
