@@ -81,4 +81,19 @@ plan = buildCopyPlan(cs, date, tomorrow);
 assert(!plan.adds.some((r) => r.resourceId === 'r-dave'), 'copy: in-training resource not overwritten');
 assert(plan.skipped.some((s) => s.resourceId === 'r-dave' && s.reason === 'training'), 'copy: Dave skipped (training)');
 
-console.log('OK — #6 interactions + resolver + #9 copy-forward verified');
+// --- master-data CRUD (#11) ---
+const { InMemoryPlannerRepo } = await import('../src/data/inMemoryRepo');
+const repo = new InMemoryPlannerRepo();
+
+const nr = await repo.addResource({ name: 'New Hire Cart', type: 'hire', crew: 'road-construction', rate: null, active: true });
+assert((await repo.listAllResources()).some((r) => r.id === nr.id), 'CRUD: resource added');
+await repo.updateResource(nr.id, { active: false }); // soft-delete
+assert.equal((await repo.listAllResources()).find((r) => r.id === nr.id)!.active, false, 'CRUD: soft-deleted');
+assert(!(await repo.listResources()).some((r) => r.id === nr.id), 'CRUD: inactive excluded from active list');
+
+const njs = await repo.addJobSite({ name: 'New Rd', jobNumber: '99999', crew: 'road-construction', startDate: null, endDate: null, status: 'active' });
+await repo.updateJobSite(njs.id, { status: 'complete' });
+assert.equal((await repo.listAllJobSites()).find((s) => s.id === njs.id)!.status, 'complete', 'CRUD: job site marked complete');
+assert(!(await repo.getBoard('2026-08-04')).sites.some((s) => s.site.id === njs.id), 'CRUD: complete site off the board');
+
+console.log('OK — #6 interactions + resolver + #9 copy-forward + #11 CRUD verified');

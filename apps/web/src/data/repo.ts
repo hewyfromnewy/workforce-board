@@ -5,15 +5,19 @@
  *
  * Method shapes mirror the API's read/write split (apps/api/src/db/queries.ts).
  */
-import type { IsoDate, Resource } from '@workforce/shared';
+import type { IsoDate, JobSite, Resource } from '@workforce/shared';
 import type { BoardData, PlacementInput, WeekData } from './types';
 import type { CopyPlan } from './copyForward';
 
 export interface PlannerRepo {
   // Reads
-  listResources(): Promise<Resource[]>;
+  listResources(): Promise<Resource[]>; // active only
   getBoard(date: IsoDate): Promise<BoardData>;
   getWeek(startDate: IsoDate): Promise<WeekData>;
+
+  // Master-data reads (include inactive/complete, for the manage panel)
+  listAllResources(): Promise<Resource[]>;
+  listAllJobSites(): Promise<JobSite[]>;
 
   // Copy-forward: plan (preview) then commit (append-only)
   planCopyDay(fromDate: IsoDate, toDate: IsoDate): Promise<CopyPlan>;
@@ -23,5 +27,10 @@ export interface PlannerRepo {
   // Writes (append-only for assignments)
   place(input: PlacementInput): Promise<void>;
   setLeave(resourceId: string, date: IsoDate, onLeave: boolean): Promise<void>;
+
+  // Master-data CRUD (never hard-delete — active flag / complete status only, §3/§6)
   addResource(input: Omit<Resource, 'id'>): Promise<Resource>;
+  updateResource(id: string, patch: Partial<Omit<Resource, 'id'>>): Promise<void>;
+  addJobSite(input: Omit<JobSite, 'id'>): Promise<JobSite>;
+  updateJobSite(id: string, patch: Partial<Omit<JobSite, 'id'>>): Promise<void>;
 }

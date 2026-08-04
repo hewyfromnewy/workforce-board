@@ -8,7 +8,7 @@
  * component changes. localStorage is NOT acceptable as the real persistence
  * (it loses history, §6) — hence the swappable seam.
  */
-import type { IsoDate, Resource } from '@workforce/shared';
+import type { IsoDate, JobSite, Resource } from '@workforce/shared';
 import type { PlannerRepo } from './repo';
 import type { BoardData, PlacementInput, WeekData } from './types';
 import { buildBoard } from './buildBoard';
@@ -54,6 +54,14 @@ export class InMemoryPlannerRepo implements PlannerRepo {
 
   async listResources(): Promise<Resource[]> {
     return this.state.resources.filter((r) => r.active);
+  }
+
+  async listAllResources(): Promise<Resource[]> {
+    return [...this.state.resources];
+  }
+
+  async listAllJobSites(): Promise<JobSite[]> {
+    return [...this.state.jobSites];
   }
 
   async getBoard(date: IsoDate): Promise<BoardData> {
@@ -116,9 +124,26 @@ export class InMemoryPlannerRepo implements PlannerRepo {
   }
 
   async addResource(input: Omit<Resource, 'id'>): Promise<Resource> {
-    const resource: Resource = { ...input, id: `r-new-${this.state.resources.length}` };
+    const resource: Resource = { ...input, id: `r-new-${Date.now()}-${this.state.resources.length}` };
     this.state.resources.push(resource);
     this.save();
     return resource;
+  }
+
+  async updateResource(id: string, patch: Partial<Omit<Resource, 'id'>>): Promise<void> {
+    this.state.resources = this.state.resources.map((r) => (r.id === id ? { ...r, ...patch } : r));
+    this.save();
+  }
+
+  async addJobSite(input: Omit<JobSite, 'id'>): Promise<JobSite> {
+    const site: JobSite = { ...input, id: `js-new-${Date.now()}-${this.state.jobSites.length}` };
+    this.state.jobSites.push(site);
+    this.save();
+    return site;
+  }
+
+  async updateJobSite(id: string, patch: Partial<Omit<JobSite, 'id'>>): Promise<void> {
+    this.state.jobSites = this.state.jobSites.map((s) => (s.id === id ? { ...s, ...patch } : s));
+    this.save();
   }
 }

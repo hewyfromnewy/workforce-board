@@ -8,11 +8,13 @@ export function BoardHeader({
   onDateChange,
   view,
   onViewChange,
+  onManage,
 }: {
   date: string;
   onDateChange: (date: string) => void;
   view: BoardView;
   onViewChange: (view: BoardView) => void;
+  onManage: () => void;
 }) {
   const step = view === 'weekly' ? 7 : 1;
   const label = format(new Date(`${date}T00:00:00`), 'EEE dd/MM/yy');
@@ -50,6 +52,10 @@ export function BoardHeader({
           <span className="text-sm font-semibold text-slate-700">{view === 'weekly' ? `week of ${label}` : label}</span>
           <button onClick={() => shift(step)} className="rounded border border-slate-300 px-2 py-1 text-sm hover:bg-slate-100">›</button>
         </div>
+
+        <button onClick={onManage} className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+          Manage
+        </button>
       </div>
     </header>
   );
