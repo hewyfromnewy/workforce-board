@@ -1,13 +1,16 @@
 import { useRef, useState } from 'react';
+import { addDays, format } from 'date-fns';
 import { RESOURCE_TYPE_COLUMNS, type AssignmentSlot, type ResourceType } from '@workforce/shared';
-import { useBoard } from '@/data/RepoContext';
+import { useBoard, useRepo } from '@/data/RepoContext';
 import { resolveSiteDrop } from '@/data/dropResolver';
+import type { CopyPlan } from '@/data/copyForward';
 import type { Destination, Placement, SiteRow } from '@/data/types';
 import { renderElementToPng, downloadBlob, copyBlobToClipboard } from '@/spike/exportPng';
 import { ResourceTag } from './ResourceTag';
 import { Drop } from './DropZone';
 import { ResourcePool } from './ResourcePool';
 import { ExportableBoard } from './ExportableBoard';
+import { CopyPreviewModal } from './CopyPreviewModal';
 
 const GRID = 'minmax(160px, 1.2fr) 1.4fr 1.4fr 0.9fr 1fr 1.2fr';
 
@@ -26,10 +29,22 @@ function TypeCell({ placements }: { placements: Placement[] }) {
 }
 
 export function DailyBoard({ date }: { date: string }) {
-  const { board, loading, place, setLeave } = useBoard(date);
+  const { board, loading, place, setLeave, refresh } = useBoard(date);
+  const repo = useRepo();
   const exportRef = useRef<HTMLDivElement>(null);
   const [shareStatus, setShareStatus] = useState('');
   const [pending, setPending] = useState<Pending | null>(null);
+  const [copyPlan, setCopyPlan] = useState<CopyPlan | null>(null);
+
+  async function previewCopyPrevDay() {
+    const prev = format(addDays(new Date(`${date}T00:00:00`), -1), 'yyyy-MM-dd');
+    setCopyPlan(await repo.planCopyDay(prev, date));
+  }
+  async function commitCopy() {
+    if (copyPlan) await repo.commitCopy(copyPlan);
+    setCopyPlan(null);
+    await refresh();
+  }
 
   async function handleShare() {
     if (!exportRef.current) return;
@@ -116,6 +131,9 @@ export function DailyBoard({ date }: { date: string }) {
           <button onClick={handleShare} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
             Share as image
           </button>
+          <button onClick={previewCopyPrevDay} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+            Copy previous day
+          </button>
           <span className="text-sm text-slate-500">{shareStatus}</span>
         </div>
 
@@ -186,6 +204,8 @@ export function DailyBoard({ date }: { date: string }) {
           <ExportableBoard board={board} />
         </div>
       </div>
+
+      {copyPlan && <CopyPreviewModal plan={copyPlan} onCancel={() => setCopyPlan(null)} onConfirm={commitCopy} />}
 
       {pending && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

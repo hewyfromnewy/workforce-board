@@ -1,7 +1,10 @@
-import { format } from 'date-fns';
+import { useState } from 'react';
+import { addDays, format } from 'date-fns';
 import type { ResourceType } from '@workforce/shared';
-import { useWeek } from '@/data/RepoContext';
+import { useWeek, useRepo } from '@/data/RepoContext';
+import type { CopyPlan } from '@/data/copyForward';
 import type { WeekCell, WeekPlacement } from '@/data/types';
+import { CopyPreviewModal } from './CopyPreviewModal';
 
 const TYPE_DOT: Record<ResourceType, string> = {
   person: 'bg-amber-400',
@@ -49,13 +52,31 @@ function CellView({ cell, today }: { cell: WeekCell; today: string }) {
 }
 
 export function WeeklyGrid({ startDate }: { startDate: string }) {
-  const { week, loading } = useWeek(startDate);
+  const { week, loading, refresh } = useWeek(startDate);
+  const repo = useRepo();
   const today = format(new Date(), 'yyyy-MM-dd');
+  const [copyPlan, setCopyPlan] = useState<CopyPlan | null>(null);
+
+  async function previewCopyNextWeek() {
+    const next = format(addDays(new Date(`${startDate}T00:00:00`), 7), 'yyyy-MM-dd');
+    setCopyPlan(await repo.planCopyWeek(startDate, next));
+  }
+  async function commitCopy() {
+    if (copyPlan) await repo.commitCopy(copyPlan);
+    setCopyPlan(null);
+    await refresh();
+  }
 
   if (loading || !week) return <div className="p-6 text-slate-500">Loading week…</div>;
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-300 bg-white shadow-sm">
+    <div className="space-y-3">
+      <div>
+        <button onClick={previewCopyNextWeek} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+          Copy this week → next week
+        </button>
+      </div>
+      <div className="overflow-x-auto rounded-lg border border-slate-300 bg-white shadow-sm">
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
@@ -89,6 +110,8 @@ export function WeeklyGrid({ startDate }: { startDate: string }) {
           ))}
         </tbody>
       </table>
+      </div>
+      {copyPlan && <CopyPreviewModal plan={copyPlan} onCancel={() => setCopyPlan(null)} onConfirm={commitCopy} />}
     </div>
   );
 }

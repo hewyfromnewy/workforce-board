@@ -84,5 +84,11 @@ export function useWeek(startDate: IsoDate) {
     });
   }, [repo, startDate]);
 
-  return { week, loading };
+  async function refresh() {
+    const s = latest.current;
+    const data = await repo.getWeek(s);
+    if (latest.current === s) setWeek(data);
+  }
+
+  return { week, loading, refresh };
 }

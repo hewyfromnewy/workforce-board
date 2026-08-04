@@ -13,6 +13,7 @@ import type { PlannerRepo } from './repo';
 import type { BoardData, PlacementInput, WeekData } from './types';
 import { buildBoard } from './buildBoard';
 import { buildWeek } from './buildWeek';
+import { buildCopyPlan, buildCopyWeekPlan, type CopyPlan } from './copyForward';
 import { seed, type SeedState } from './seed';
 
 const STORAGE_KEY = 'planner-inmemory-v1';
@@ -61,6 +62,32 @@ export class InMemoryPlannerRepo implements PlannerRepo {
 
   async getWeek(startDate: IsoDate): Promise<WeekData> {
     return buildWeek(startDate, this.state);
+  }
+
+  async planCopyDay(fromDate: IsoDate, toDate: IsoDate): Promise<CopyPlan> {
+    return buildCopyPlan(this.state, fromDate, toDate);
+  }
+
+  async planCopyWeek(fromStart: IsoDate, toStart: IsoDate): Promise<CopyPlan> {
+    return buildCopyWeekPlan(this.state, fromStart, toStart);
+  }
+
+  async commitCopy(plan: CopyPlan): Promise<void> {
+    // Append-only: each copied placement is a new row with a fresh (newer)
+    // timestamp so it supersedes whatever was on the target for that slot.
+    const base = Date.now();
+    plan.adds.forEach((row, i) => {
+      this.state.assignments.push({
+        id: `a-copy-${base}-${i}`,
+        resourceId: row.resourceId,
+        date: row.date,
+        slot: row.slot,
+        destinationType: row.destinationType,
+        destinationId: row.destinationId,
+        createdAt: new Date(base + i).toISOString(),
+      });
+    });
+    this.save();
   }
 
   async place(input: PlacementInput): Promise<void> {

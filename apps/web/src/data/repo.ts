@@ -7,12 +7,18 @@
  */
 import type { IsoDate, Resource } from '@workforce/shared';
 import type { BoardData, PlacementInput, WeekData } from './types';
+import type { CopyPlan } from './copyForward';
 
 export interface PlannerRepo {
   // Reads
   listResources(): Promise<Resource[]>;
   getBoard(date: IsoDate): Promise<BoardData>;
   getWeek(startDate: IsoDate): Promise<WeekData>;
+
+  // Copy-forward: plan (preview) then commit (append-only)
+  planCopyDay(fromDate: IsoDate, toDate: IsoDate): Promise<CopyPlan>;
+  planCopyWeek(fromStart: IsoDate, toStart: IsoDate): Promise<CopyPlan>;
+  commitCopy(plan: CopyPlan): Promise<void>;
 
   // Writes (append-only for assignments)
   place(input: PlacementInput): Promise<void>;

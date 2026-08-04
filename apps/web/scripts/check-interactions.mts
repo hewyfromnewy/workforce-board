@@ -57,4 +57,28 @@ const half = resolveSiteDrop(info({ sitePlacements: [{ siteId: 'js-a', slot: 'am
 assert.equal(half.kind, 'place', 'half → place');
 assert.equal(half.kind === 'place' && half.slot, 'am', 'half move keeps slot');
 
-console.log('OK — #6 interaction data semantics + resolver branching verified');
+// --- copy-forward (#9) ---
+const { buildCopyPlan } = await import('../src/data/copyForward');
+const cs = seed(date); // fresh
+const tomorrow = '2026-08-11'; // empty (outside the seeded week)
+
+// Target empty → everything current on `date` copies forward.
+let plan = buildCopyPlan(cs, date, tomorrow);
+assert(plan.adds.some((r) => r.resourceId === 'r-chris' && r.destinationId === 'js-clarence'), 'copy: Chris → Clarence');
+assert(plan.adds.some((r) => r.resourceId === 'r-priya' && r.destinationType === 'training'), 'copy: training carried');
+assert(plan.adds.every((r) => r.date === tomorrow), 'copy: rows target tomorrow');
+assert.equal(plan.skipped.length, 0, 'copy: nothing skipped into empty day');
+
+// Respect target leave: Chris on leave tomorrow → skipped, not placed.
+cs.leave.push({ resourceId: 'r-chris', date: tomorrow, source: 'manual' });
+plan = buildCopyPlan(cs, date, tomorrow);
+assert(!plan.adds.some((r) => r.resourceId === 'r-chris'), 'copy: on-leave resource not copied');
+assert(plan.skipped.some((s) => s.resourceId === 'r-chris' && s.reason === 'leave'), 'copy: Chris skipped (leave)');
+
+// Respect target training: Dave already in training tomorrow → not overwritten.
+cs.assignments.push({ id: 't1', resourceId: 'r-dave', date: tomorrow, slot: 'full', destinationType: 'training', destinationId: null, createdAt: `${tomorrow}T09:00:00.000Z` });
+plan = buildCopyPlan(cs, date, tomorrow);
+assert(!plan.adds.some((r) => r.resourceId === 'r-dave'), 'copy: in-training resource not overwritten');
+assert(plan.skipped.some((s) => s.resourceId === 'r-dave' && s.reason === 'training'), 'copy: Dave skipped (training)');
+
+console.log('OK — #6 interactions + resolver + #9 copy-forward verified');
