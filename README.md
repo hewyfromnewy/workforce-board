@@ -1,10 +1,10 @@
 # Workforce Board (Daily Roster Board)
 
-A lightweight, date-based roster board designed to replace a physical whiteboard for a local council works team.
+A lightweight, date-based roster board designed to replace a physical whiteboard for a works crew (roads, parks, depots and similar field teams).
 
 This repo is also a learning project to practice:
 - CI/CD (PR checks, staging → production deployments)
-- cloud hosting
+- cloud-agnostic hosting
 - clean domain modelling (conceptual → logical → physical data design)
 
 ---
@@ -20,6 +20,9 @@ pnpm dev:web
 
 # Run all apps in dev mode
 pnpm dev
+
+# Run the tests
+pnpm test
 
 # Build all apps
 pnpm build
@@ -69,7 +72,21 @@ From the root directory:
 | `pnpm dev:api` | Run only the API |
 | `pnpm build` | Build all apps |
 | `pnpm typecheck` | Type-check all packages |
-| `pnpm lint` | Lint all packages |
+| `pnpm test` | Run unit tests (Vitest) |
+
+---
+
+## Testing and CI
+
+Unit tests (Vitest) cover the board logic (moving, adding and deleting tags, roster text export) and localStorage persistence. The logic lives in `apps/web/src/app/lib/` as pure functions so it can be tested without a browser.
+
+GitHub Actions (`.github/workflows/ci.yml`) runs typecheck, tests and build on every push to `main` and every pull request.
+
+---
+
+## Configuration
+
+Site-specific values (app name, locations, categories, demo staff and assets) live in `apps/web/src/app/config/defaults.ts`. The bundled data is generic demo data.
 
 ---
 
@@ -107,7 +124,7 @@ Manages master data.
 ## Domain definitions
 
 - **Roster Day**: a single date's board (Draft → Sent → Archived).
-- **Location**: a row on the board (e.g., "Cameron Town").
+- **Location**: a row on the board (e.g., "North Depot").
 - **Work Category**: a column on the board (e.g., Personnel, Plant). Seeded reference data in V1.
 - **Team Member**: a person tag (yellow tags in UI).
 - **Asset**: a plant/vehicle/equipment tag (green tags in UI).

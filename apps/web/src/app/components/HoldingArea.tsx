@@ -1,16 +1,15 @@
 import { useDrop } from 'react-dnd';
-import { Plus, Package as PackageIcon } from 'lucide-react';
+import { Package as PackageIcon } from 'lucide-react';
 import { Tag } from './RosterBoard';
 import { DraggableTag } from './DraggableTag';
 
 interface HoldingAreaProps {
   tags: Tag[];
   onDrop: (tagId: string, fromCategoryId: string | null, toCategoryId: string | null) => void;
-  onAddTag: (tag: Tag) => void;
   onDeleteTag: (tagId: string) => void;
 }
 
-export function HoldingArea({ tags, onDrop, onAddTag, onDeleteTag }: HoldingAreaProps) {
+export function HoldingArea({ tags, onDrop, onDeleteTag }: HoldingAreaProps) {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'TAG',
     drop: (item: { id: string; categoryId: string | null }) => {

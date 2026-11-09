@@ -1,5 +1,6 @@
 import { Calendar, Settings, Send } from 'lucide-react';
 import { format as formatDate } from 'date-fns';
+import { appConfig } from '@/app/config/defaults';
 
 interface RosterHeaderProps {
   date: Date;
@@ -17,8 +18,8 @@ export function RosterHeader({ date, onDateChange, onManageClick, onExportClick 
             <Calendar className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Daily Roster Board</h1>
-            <p className="text-sm text-gray-500">NSW Council Workforce Management</p>
+            <h1 className="text-xl font-bold text-gray-900">{appConfig.appName}</h1>
+            <p className="text-sm text-gray-500">{appConfig.subtitle}</p>
           </div>
         </div>
 
