@@ -1,17 +1,8 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { openDay, signIn, uniqueDay } from './support';
 
-const labels: Record<string, string> = {
-  'admin@example.com': 'Admin',
-  'supervisor@example.com': 'Supervisor',
-  'member@example.com': 'Team Member',
-  'platform@example.com': 'No team',
-};
-
-const signIn = async (page: Page, email: string) => {
-  await page.goto('/');
-  await page.getByRole('button', { name: `Sign in as ${labels[email]}` }).click();
-};
+const cell = (page: Page, name: string) => page.getByRole('cell', { name });
 
 test('admin sees every menu item and can send', async ({ page }) => {
   await signIn(page, 'admin@example.com');
@@ -25,23 +16,25 @@ test('admin sees every menu item and can send', async ({ page }) => {
 
 test('supervisor can edit and send but not manage', async ({ page }) => {
   await signIn(page, 'supervisor@example.com');
+  await openDay(page, uniqueDay());
   const nav = page.getByRole('navigation', { name: 'Main' });
   await expect(nav.getByRole('button', { name: 'Roster' })).toBeVisible();
   await expect(nav.getByRole('button', { name: 'Manage' })).toHaveCount(0);
   await expect(nav.getByRole('button', { name: 'Users' })).toHaveCount(0);
 
-  await page.locator('[data-tag="John Smith"]').dragTo(page.getByRole('cell', { name: 'North Depot PERSONNEL' }));
-  await expect(page.getByRole('cell', { name: 'North Depot PERSONNEL' }).getByText('John Smith')).toBeVisible();
+  await page.locator('[data-tag="John Smith"]').dragTo(cell(page, 'North Depot PERSONNEL'));
+  await expect(cell(page, 'North Depot PERSONNEL').getByText('John Smith')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeEnabled();
 });
 
 test('team member can only view', async ({ page }) => {
   await signIn(page, 'member@example.com');
+  await openDay(page, uniqueDay());
   await expect(page.getByText('You can view this roster but not change it.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Send', exact: true })).toHaveCount(0);
 
-  await page.locator('[data-tag="John Smith"]').dragTo(page.getByRole('cell', { name: 'North Depot PERSONNEL' }));
-  await expect(page.getByRole('cell', { name: 'North Depot PERSONNEL' }).getByText('John Smith')).toHaveCount(0);
+  await page.locator('[data-tag="John Smith"]').dragTo(cell(page, 'North Depot PERSONNEL'));
+  await expect(cell(page, 'North Depot PERSONNEL').getByText('John Smith')).toHaveCount(0);
 
   const nav = page.getByRole('navigation', { name: 'Main' });
   await expect(nav.getByRole('button', { name: 'Manage' })).toHaveCount(0);

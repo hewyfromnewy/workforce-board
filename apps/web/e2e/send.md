@@ -11,7 +11,7 @@ A supervisor finishes the day's roster and sends it. Sending is distribution onl
 1. An empty roster cannot be sent. The status reads "Draft".
 2. Open Send, check the message preview groups people by location and category, and choose Copy text. The status becomes "Sent at ..." and the clipboard holds the roster.
 3. Edit the roster after sending. The status becomes "Changed since sent at ...", a warning shows, and the button reads "Send again". Sending again clears the warning.
-4. A sent day appears in Sent history with its allocation count and opens back on the Roster page.
+4. A sent day appears in Sent history with when it was sent and how many allocations went out, and opens back on the Roster page.
 
 ## What a regression looks like
 

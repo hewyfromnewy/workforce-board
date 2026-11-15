@@ -18,6 +18,8 @@ A user signs in and sees only what their role allows. The demo accounts are Admi
 6. Sign out returns to the login page.
 7. An admin changes a user's role and changes it back. The change is enforced by the database.
 
+Each spec works on its own unique far-future date, because every test shares one database.
+
 ## What a regression looks like
 
 - A role seeing a menu item or button it should not.

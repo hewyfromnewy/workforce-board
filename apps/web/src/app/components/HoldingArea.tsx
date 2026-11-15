@@ -1,6 +1,6 @@
 import { useDrop } from 'react-dnd';
 import { Users } from 'lucide-react';
-import type { Tag } from '@workforce/shared';
+import type { Tag, TagType } from '@workforce/shared';
 import { DraggableTag } from './DraggableTag';
 
 interface HoldingAreaProps {
@@ -8,15 +8,18 @@ interface HoldingAreaProps {
   onUnassign: (tagId: string) => void;
 }
 
+const groups: { type: TagType; title: string }[] = [
+  { type: 'member', title: 'Team members' },
+  { type: 'asset', title: 'Assets' },
+  { type: 'hire', title: 'Hire and contractors' },
+];
+
 export function HoldingArea({ tags, onUnassign }: HoldingAreaProps) {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'TAG',
     drop: (item: { id: string }) => onUnassign(item.id),
     collect: monitor => ({ isOver: monitor.isOver() }),
   }));
-
-  const members = tags.filter(t => t.type === 'member');
-  const assets = tags.filter(t => t.type === 'asset');
 
   return (
     <section
@@ -37,30 +40,22 @@ export function HoldingArea({ tags, onUnassign }: HoldingAreaProps) {
           </p>
         ) : (
           <div className="space-y-4">
-            {members.length > 0 && (
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">
-                  Team members ({members.length})
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {members.map(tag => (
-                    <DraggableTag key={tag.id} tag={tag} />
-                  ))}
+            {groups.map(group => {
+              const items = tags.filter(t => t.type === group.type);
+              if (items.length === 0) return null;
+              return (
+                <div key={group.type}>
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">
+                    {group.title} ({items.length})
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {items.map(tag => (
+                      <DraggableTag key={tag.id} tag={tag} />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
-            {assets.length > 0 && (
-              <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">
-                  Assets ({assets.length})
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {assets.map(tag => (
-                    <DraggableTag key={tag.id} tag={tag} />
-                  ))}
-                </div>
-              </div>
-            )}
+              );
+            })}
           </div>
         )}
       </div>

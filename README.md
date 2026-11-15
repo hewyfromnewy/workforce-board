@@ -181,37 +181,25 @@ Explicitly deferred:
 
 ## Data Model (high-level)
 
-**RosterDay**
-- date
-- status (Draft | Sent | Archived)
-- sentAt, sentBy
-
-**Location**
+**Tag**
 - name
+- type (member | asset | hire)
 - active (soft delete)
 
-**WorkCategory** (seeded)
-- name
-- sortOrder
-- active
+**Job** (a row on the board)
+- name, job number, note
+- the same name may repeat with a different job number
 
-**TeamMember**
-- displayName
-- active
+**RosterDay**
+- date
+- supervisors for the day
+- assignments, notes per cell
+- sends (each Send stores a snapshot)
 
-**Asset**
-- name
-- assetType (Plant | Vehicle | Equipment)
-- active
+**Assignment**
+- tag, work category, job, date
 
-**Assignment** (core)
-- rosterDayId
-- locationId
-- workCategoryId
-- resourceType (Person | Asset)
-- resourceId (TeamMemberId OR AssetId)
-- notes (optional)
-- createdBy, createdAt
+Work categories are fixed for now: Personnel, Plant, Traffic Control, Contractors, Leave, Training.
 
 ---
 

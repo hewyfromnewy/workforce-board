@@ -1,5 +1,5 @@
 import { useDrag } from 'react-dnd';
-import { User, Package, X } from 'lucide-react';
+import { Package, Truck, User, X } from 'lucide-react';
 import type { Tag } from '@workforce/shared';
 import { useAccess } from '@/app/access';
 
@@ -8,6 +8,14 @@ interface DraggableTagProps {
   compact?: boolean;
   onRemove?: () => void;
 }
+
+const colours: Record<Tag['type'], string> = {
+  member: 'bg-amber-100 border-amber-300 text-amber-900',
+  asset: 'bg-green-100 border-green-300 text-green-900',
+  hire: 'bg-white border-gray-400 text-gray-900',
+};
+
+const icons = { member: User, asset: Package, hire: Truck };
 
 export function DraggableTag({ tag, compact, onRemove }: DraggableTagProps) {
   const { can } = useAccess();
@@ -22,18 +30,14 @@ export function DraggableTag({ tag, compact, onRemove }: DraggableTagProps) {
     [tag.id, canEdit],
   );
 
-  const colour =
-    tag.type === 'member'
-      ? 'bg-amber-100 border-amber-300 text-amber-900'
-      : 'bg-green-100 border-green-300 text-green-900';
-  const Icon = tag.type === 'member' ? User : Package;
+  const Icon = icons[tag.type];
   const size = compact ? 'px-2 py-1 text-xs gap-1' : 'px-3 py-2 text-sm gap-2';
 
   return (
     <div
       ref={drag}
       data-tag={tag.name}
-      className={`inline-flex items-center rounded border-2 ${canEdit ? 'cursor-grab active:cursor-grabbing' : ''} ${size} ${colour} ${
+      className={`inline-flex items-center rounded border-2 ${canEdit ? 'cursor-grab active:cursor-grabbing' : ''} ${size} ${colours[tag.type]} ${
         isDragging ? 'opacity-40' : ''
       }`}
     >

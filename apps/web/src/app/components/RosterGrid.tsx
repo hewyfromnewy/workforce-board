@@ -1,17 +1,22 @@
+import { useState } from 'react';
 import { useDrop } from 'react-dnd';
-import type { Assignment, Category, Tag } from '@workforce/shared';
+import { noteKey } from '@workforce/shared';
+import type { Assignment, Category, Job, Tag } from '@workforce/shared';
+import { useAccess } from '@/app/access';
 import { DraggableTag } from './DraggableTag';
 
 interface RosterGridProps {
   categories: Category[];
-  locations: string[];
+  jobs: Job[];
   assignments: Assignment[];
+  notes: Record<string, string>;
   tagById: Map<string, Tag>;
-  onAssign: (tagId: string, categoryId: string, location: string) => void;
+  onAssign: (tagId: string, categoryId: string, jobId: string) => void;
   onUnassign: (tagId: string) => void;
+  onNote: (jobId: string, categoryId: string, text: string) => void;
 }
 
-export function RosterGrid({ categories, locations, assignments, tagById, onAssign, onUnassign }: RosterGridProps) {
+export function RosterGrid({ categories, jobs, assignments, notes, tagById, onAssign, onUnassign, onNote }: RosterGridProps) {
   return (
     <table className="border-collapse w-full">
       <thead>
@@ -27,20 +32,24 @@ export function RosterGrid({ categories, locations, assignments, tagById, onAssi
         </tr>
       </thead>
       <tbody>
-        {locations.map(location => (
-          <tr key={location}>
-            <th scope="row" className="sticky left-0 z-10 bg-gray-100 px-3 py-2 text-left font-medium text-gray-700 border border-gray-300 text-sm">
-              {location}
+        {jobs.map(job => (
+          <tr key={job.id}>
+            <th scope="row" className="sticky left-0 z-10 bg-gray-100 px-3 py-2 text-left align-top border border-gray-300 text-sm">
+              <div className="font-medium text-gray-700">{job.name}</div>
+              {job.jobNumber && <div className="text-xs font-semibold text-red-600">{job.jobNumber}</div>}
+              {job.note && <div className="text-xs font-normal text-gray-500">{job.note}</div>}
             </th>
             {categories.map(category => (
               <GridCell
                 key={category.id}
-                label={`${location} ${category.name}`}
+                label={`${job.name}${job.jobNumber ? ` ${job.jobNumber}` : ''} ${category.name}`}
+                note={notes[noteKey(job.id, category.id)] ?? ''}
                 tags={assignments
-                  .filter(a => a.location === location && a.categoryId === category.id)
+                  .filter(a => a.jobId === job.id && a.categoryId === category.id)
                   .map(a => tagById.get(a.tagId)!)}
-                onDrop={tagId => onAssign(tagId, category.id, location)}
+                onDrop={tagId => onAssign(tagId, category.id, job.id)}
                 onUnassign={onUnassign}
+                onNote={text => onNote(job.id, category.id, text)}
               />
             ))}
           </tr>
@@ -52,12 +61,17 @@ export function RosterGrid({ categories, locations, assignments, tagById, onAssi
 
 interface GridCellProps {
   label: string;
+  note: string;
   tags: Tag[];
   onDrop: (tagId: string) => void;
   onUnassign: (tagId: string) => void;
+  onNote: (text: string) => void;
 }
 
-function GridCell({ label, tags, onDrop, onUnassign }: GridCellProps) {
+function GridCell({ label, note, tags, onDrop, onUnassign, onNote }: GridCellProps) {
+  const [editing, setEditing] = useState(false);
+  const { can } = useAccess();
+  const canEdit = can('roster.edit');
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'TAG',
     drop: (item: { id: string }) => onDrop(item.id),
@@ -75,6 +89,43 @@ function GridCell({ label, tags, onDrop, onUnassign }: GridCellProps) {
           <DraggableTag key={tag.id} tag={tag} compact onRemove={() => onUnassign(tag.id)} />
         ))}
       </div>
+      {editing ? (
+        <input
+          autoFocus
+          aria-label={`Note for ${label}`}
+          defaultValue={note}
+          onBlur={e => {
+            onNote(e.target.value.trim());
+            setEditing(false);
+          }}
+          onKeyDown={e => {
+            if (e.key === 'Enter') e.currentTarget.blur();
+            if (e.key === 'Escape') setEditing(false);
+          }}
+          className="mt-1 w-full px-1 py-0.5 text-xs border border-gray-300 rounded"
+        />
+      ) : note ? (
+        <button
+          type="button"
+          disabled={!canEdit}
+          aria-label={`Edit note for ${label}`}
+          onClick={() => setEditing(true)}
+          className="mt-1 text-left text-xs italic text-gray-700"
+        >
+          {note}
+        </button>
+      ) : (
+        canEdit && (
+          <button
+            type="button"
+            aria-label={`Add note to ${label}`}
+            onClick={() => setEditing(true)}
+            className="mt-1 text-[10px] text-gray-400 hover:text-gray-700"
+          >
+            + note
+          </button>
+        )
+      )}
     </td>
   );
 }

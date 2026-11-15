@@ -1,4 +1,4 @@
-export type TagType = 'member' | 'asset';
+export type TagType = 'member' | 'asset' | 'hire';
 
 export interface Tag {
   id: string;
@@ -11,22 +11,35 @@ export interface Category {
   name: string;
 }
 
+export interface Job {
+  id: string;
+  name: string;
+  jobNumber: string;
+  note: string;
+}
+
 export interface Assignment {
   tagId: string;
   categoryId: string;
-  location: string;
+  jobId: string;
 }
 
 export interface SentRecord {
   at: string;
   assignments: Assignment[];
+  notes: Record<string, string>;
+  supervisorIds: string[];
 }
 
 export interface RosterDay {
   date: string;
   assignments: Assignment[];
+  notes: Record<string, string>;
+  supervisorIds: string[];
   sent?: SentRecord;
 }
+
+export const noteKey = (jobId: string, categoryId: string) => `${jobId}|${categoryId}`;
 
 export type RosterStatus = 'draft' | 'sent' | 'changed';
 

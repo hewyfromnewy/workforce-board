@@ -14,7 +14,11 @@ Daily roster board: supervisors allocate people and assets to locations across w
 
 Turborepo + pnpm. `apps/web` is the client roster app (Vite + React + TypeScript, port 5173). `apps/admin` is the platform admin app for tenants, users, roles and permissions (port 5174); it is a scaffold until the backend exists. Tenant admins manage their own users inside `apps/web`, not in `apps/admin`. `packages/shared` holds shared types, including roles and permissions. `apps/api` is a placeholder. Planned backend is Supabase (Postgres, Auth, RLS).
 
-Auth, tenants, memberships and roles live in Supabase (`supabase/migrations`, row-level security on every table). Roster data is still browser `localStorage` per tenant (`apps/web/src/app/store.ts`); moving it to Supabase is next. The client runs in two modes: with `VITE_SUPABASE_URL` set it requires login and gates the UI by role permissions; without it, it runs standalone with all permissions (this is what the static GitHub Pages build is). Master data (tags, locations) is global; rosters are stored per date. Send records a snapshot and does not lock the day; the board flags a day as changed when it differs from that snapshot.
+Auth, tenants, memberships and roles live in Supabase (`supabase/migrations`, row-level security on every table). The client runs in two modes: with `VITE_SUPABASE_URL` set it requires login, gates the UI by role permissions, and stores roster data in Supabase (`remoteStore.ts`); without it, it runs standalone on browser `localStorage` with all permissions (`useLocalStore` in `store.ts`, and what the static GitHub Pages build would be). Both implement the same `StoreApi` and share the pure functions in `store.ts`.
+
+Roster model: tags are `member`, `asset` or `hire` (contractors and hire gear, which may repeat). Locations are jobs with a name, job number and note, and the same name may appear with different job numbers. A day has assignments (tag, category, job), free-text notes per cell, and supervisors. Send records a snapshot and does not lock the day; the board flags a day as changed when it differs from the latest snapshot. Removed tags and jobs are soft-deleted in Supabase so Undo works.
+
+Only members of a tenant can read its roster data, including no platform admin access. Roster edits need `roster.edit`, sending needs `roster.send`, and the master lists need `master_data.manage`.
 
 ## Commands
 
@@ -31,7 +35,7 @@ pnpm test:e2e
 docker compose up -d --build
 ```
 
-Specs live in `apps/web/e2e` and `apps/admin/e2e`. Drag and drop in specs: use `dragTo` onto cells that are visible without horizontal scrolling.
+Specs live in `apps/web/e2e` (`backend/` specs need Supabase and use one unique far-future date each, since they share a database) and `apps/admin/e2e`. Drag and drop in specs: use `dragTo` onto cells that are visible without horizontal scrolling.
 
 ## Demo accounts
 

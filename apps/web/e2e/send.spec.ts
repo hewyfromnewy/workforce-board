@@ -46,7 +46,7 @@ test('sent days appear in history and can be reopened', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Next day' }).click();
   await page.getByRole('button', { name: 'Sent history' }).click();
-  await expect(page.getByText('1 allocations')).toBeVisible();
+  await expect(page.getByText(/1 allocation$/)).toBeVisible();
 
   await page.getByRole('button', { name: /^Open / }).click();
   await expect(page.getByRole('cell', { name: 'Park Street TRAINING' }).getByText('Lisa Anderson')).toBeVisible();

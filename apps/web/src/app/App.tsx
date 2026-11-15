@@ -12,7 +12,10 @@ import { Sidebar } from '@/app/components/Sidebar';
 import type { View } from '@/app/components/Sidebar';
 import { AccessProvider, useAccess } from '@/app/access';
 import { UsersPage } from '@/app/components/UsersPage';
-import { useStore } from '@/app/store';
+import { useLocalStore } from '@/app/store';
+import type { StoreApi } from '@/app/store';
+import { useRemoteStore } from '@/app/remoteStore';
+import { backendEnabled } from '@/app/supabase';
 
 const dndBackends = {
   backends: [
@@ -36,8 +39,20 @@ export default function App() {
 }
 
 function Board() {
-  const { tenantId, tenantName } = useAccess();
-  const api = useStore(tenantId);
+  const { tenantId } = useAccess();
+  return backendEnabled ? <RemoteBoard tenantId={tenantId} /> : <LocalBoard tenantId={tenantId} />;
+}
+
+function LocalBoard({ tenantId }: { tenantId: string }) {
+  return <Shell api={useLocalStore(tenantId)} />;
+}
+
+function RemoteBoard({ tenantId }: { tenantId: string }) {
+  return <Shell api={useRemoteStore(tenantId)} />;
+}
+
+function Shell({ api }: { api: StoreApi }) {
+  const { tenantName } = useAccess();
   const [view, setView] = useState<View>('roster');
   const [menuOpen, setMenuOpen] = useState(false);
   const [date, setDate] = useState(new Date());

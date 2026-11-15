@@ -34,3 +34,22 @@ select id, '00000000-0000-0000-0000-0000000000a1',
   name, email
 from demo_users
 where email <> 'platform@example.com';
+
+insert into public.tags (tenant_id, name, type) values
+  ('00000000-0000-0000-0000-0000000000a1', 'John Smith', 'member'),
+  ('00000000-0000-0000-0000-0000000000a1', 'Sarah Johnson', 'member'),
+  ('00000000-0000-0000-0000-0000000000a1', 'Mike Davis', 'member'),
+  ('00000000-0000-0000-0000-0000000000a1', 'Emma Wilson', 'member'),
+  ('00000000-0000-0000-0000-0000000000a1', 'Chris Brown', 'member'),
+  ('00000000-0000-0000-0000-0000000000a1', 'Lisa Anderson', 'member'),
+  ('00000000-0000-0000-0000-0000000000a1', 'Excavator #1', 'asset'),
+  ('00000000-0000-0000-0000-0000000000a1', 'Truck #23', 'asset'),
+  ('00000000-0000-0000-0000-0000000000a1', 'Roller #8', 'asset'),
+  ('00000000-0000-0000-0000-0000000000a1', 'Hire Excavator', 'hire'),
+  ('00000000-0000-0000-0000-0000000000a1', 'Traffic Control Crew', 'hire');
+
+insert into public.jobs (tenant_id, name, job_number, note, sort_order) values
+  ('00000000-0000-0000-0000-0000000000a1', 'North Depot', '', '', 1),
+  ('00000000-0000-0000-0000-0000000000a1', 'River Road', '', '', 2),
+  ('00000000-0000-0000-0000-0000000000a1', 'Park Street', '', '', 3),
+  ('00000000-0000-0000-0000-0000000000a1', 'Stockpile', '', '', 4);
