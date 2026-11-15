@@ -113,5 +113,5 @@ test('an empty board tells the admin where to add things', async ({ page }) => {
   }
   await page.getByRole('button', { name: 'Roster', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Your board is empty' })).toBeVisible();
-  await expect(page.getByText('Open Manage in the menu')).toBeVisible();
+  await expect(page.getByText('Add your locations, team members and plant in Manage.')).toBeVisible();
 });

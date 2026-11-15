@@ -19,6 +19,7 @@ export function SupervisorsBar({ tags, onSet, onUnassign }: SupervisorsBarProps)
     <div
       ref={drop}
       aria-label="Supervisors"
+      data-tour="supervisors"
       role="group"
       className={`flex flex-wrap items-center gap-2 px-4 py-2 border-b border-gray-200 ${isOver ? 'bg-blue-50' : 'bg-white'}`}
     >

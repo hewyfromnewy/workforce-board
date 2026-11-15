@@ -36,17 +36,6 @@ export function SettingsPage({ api }: { api: StoreApi }) {
         </section>
         )}
 
-        <section className="bg-white rounded-lg shadow border border-gray-200 p-4 space-y-2">
-          <h2 className="font-semibold text-gray-900">How this works</h2>
-          <ul className="text-sm text-gray-700 list-disc pl-5 space-y-1">
-            <li>Pick a day, then drag people and assets from "Not on the roster" into a location and category.</li>
-            <li>Use the cross on a tag to take it off the roster again.</li>
-            <li>Send copies the roster or opens WhatsApp, and marks the day as sent.</li>
-            <li>If you change a roster after sending it, it shows as changed so you know to send it again.</li>
-            <li>Your data is saved in this browser on this device only. It does not sync to other devices yet.</li>
-          </ul>
-        </section>
-
         <section className="bg-white rounded-lg shadow border border-red-200 p-4 space-y-2">
           <h2 className="font-semibold text-gray-900">Reset</h2>
           <p className="text-sm text-gray-500">Removes every roster and restores the example people, assets and locations.</p>

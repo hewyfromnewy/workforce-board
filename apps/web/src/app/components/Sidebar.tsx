@@ -1,9 +1,9 @@
-import { CalendarDays, History, LogOut, Menu, Settings, UserCog, Users, X } from 'lucide-react';
+import { CalendarDays, CircleHelp, History, LogOut, Menu, Settings, UserCog, Users, X } from 'lucide-react';
 import type { Permission } from '@workforce/shared';
 import { useAccess } from '@/app/access';
 import type { ReactNode } from 'react';
 
-export type View = 'roster' | 'manage' | 'users' | 'history' | 'settings';
+export type View = 'roster' | 'manage' | 'users' | 'history' | 'settings' | 'help';
 
 const items: { view: View; label: string; icon: ReactNode; permission?: Permission }[] = [
   { view: 'roster', label: 'Roster', icon: <CalendarDays className="w-5 h-5" aria-hidden /> },
@@ -11,6 +11,7 @@ const items: { view: View; label: string; icon: ReactNode; permission?: Permissi
   { view: 'users', label: 'Users', icon: <UserCog className="w-5 h-5" aria-hidden />, permission: 'users.manage' },
   { view: 'history', label: 'Sent history', icon: <History className="w-5 h-5" aria-hidden /> },
   { view: 'settings', label: 'Settings', icon: <Settings className="w-5 h-5" aria-hidden /> },
+  { view: 'help', label: 'Help', icon: <CircleHelp className="w-5 h-5" aria-hidden /> },
 ];
 
 interface SidebarProps {
@@ -56,6 +57,7 @@ export function Sidebar({ orgName, view, open, onOpenChange, onNavigate }: Sideb
             <li key={item.view}>
               <button
                 type="button"
+                data-tour={`nav-${item.view}`}
                 aria-current={view === item.view ? 'page' : undefined}
                 onClick={() => onNavigate(item.view)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left ${

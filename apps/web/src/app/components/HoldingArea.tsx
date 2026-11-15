@@ -24,6 +24,7 @@ export function HoldingArea({ tags, onUnassign }: HoldingAreaProps) {
   return (
     <section
       aria-label="Not on the roster"
+      data-tour="waiting"
       className="shrink-0 w-full lg:w-64 bg-white rounded-lg shadow border border-gray-200 flex flex-col overflow-hidden"
     >
       <div className="bg-blue-700 text-white px-4 py-3 flex items-center justify-between">
