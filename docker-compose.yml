@@ -1,0 +1,50 @@
+services:
+  web:
+    build: .
+    ports:
+      - "5173:5173"
+    environment:
+      # Reliable file watching through the macOS bind mount
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - .:/app
+      # Keep container-installed deps; don't let the host mount hide them
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/apps/admin/node_modules
+      - /app/apps/api/node_modules
+      - /app/packages/shared/node_modules
+
+  web-backend:
+    build: .
+    command: ["pnpm", "--filter", "@workforce/web", "exec", "vite", "--host", "0.0.0.0", "--port", "5175"]
+    ports:
+      - "5175:5175"
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      VITE_SUPABASE_URL: http://127.0.0.1:54321
+      VITE_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/apps/admin/node_modules
+      - /app/apps/api/node_modules
+      - /app/packages/shared/node_modules
+
+  admin:
+    build: .
+    command: ["pnpm", "--filter", "@workforce/admin", "exec", "vite", "--host", "0.0.0.0", "--port", "5174"]
+    ports:
+      - "5174:5174"
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      VITE_SUPABASE_URL: http://127.0.0.1:54321
+      VITE_SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY}
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      - /app/apps/admin/node_modules
+      - /app/apps/api/node_modules
+      - /app/packages/shared/node_modules

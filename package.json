@@ -1,0 +1,30 @@
+{
+  "name": "workforce-board",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "dev:web": "turbo dev --filter=@workforce/web",
+    "dev:api": "turbo dev --filter=@workforce/api",
+    "build:web": "turbo build --filter=@workforce/web",
+    "build:api": "turbo build --filter=@workforce/api",
+    "test:e2e": "node scripts/with-supabase-env.mjs turbo test:e2e",
+    "dev:admin": "node scripts/with-supabase-env.mjs turbo dev --filter=@workforce/admin",
+    "build:admin": "turbo build --filter=@workforce/admin",
+    "dev:web:backend": "node scripts/with-supabase-env.mjs pnpm --filter @workforce/web exec vite --port 5175",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:env": "node scripts/write-env.mjs"
+  },
+  "devDependencies": {
+    "supabase": "^3.1.0",
+    "turbo": "^2.0.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

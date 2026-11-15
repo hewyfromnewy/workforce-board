@@ -1,0 +1,18 @@
+{
+  "name": "@workforce/api",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'API not yet implemented' && exit 0",
+    "build": "echo 'API not yet implemented' && exit 0",
+    "start": "echo 'API not yet implemented' && exit 0",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@workforce/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
