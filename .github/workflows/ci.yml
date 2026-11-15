@@ -35,7 +35,7 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec supabase start -x mailpit,studio,edge-runtime,imgproxy,vector,logflare,supavisor
+      - run: pnpm exec supabase start -x studio,edge-runtime,imgproxy,vector,logflare,supavisor
       - run: pnpm --filter @workforce/web exec playwright install --with-deps chromium
       - run: pnpm test:e2e
         env:

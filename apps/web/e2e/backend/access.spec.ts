@@ -1,20 +1,17 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 
-const signIn = async (page: Page, email: string) => {
-  await page.goto('/');
-  await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Password').fill('demo-password-1');
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+const labels: Record<string, string> = {
+  'admin@example.com': 'Admin',
+  'supervisor@example.com': 'Supervisor',
+  'member@example.com': 'Team Member',
+  'platform@example.com': 'No team',
 };
 
-test('wrong password shows an error', async ({ page }) => {
+const signIn = async (page: Page, email: string) => {
   await page.goto('/');
-  await page.getByLabel('Email').fill('admin@example.com');
-  await page.getByLabel('Password').fill('not-the-password');
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('not right');
-});
+  await page.getByRole('button', { name: `Sign in as ${labels[email]}` }).click();
+};
 
 test('admin sees every menu item and can send', async ({ page }) => {
   await signIn(page, 'admin@example.com');
@@ -59,7 +56,7 @@ test('an account with no team is told so', async ({ page }) => {
 test('signing out returns to the login page', async ({ page }) => {
   await signIn(page, 'supervisor@example.com');
   await page.getByRole('button', { name: 'Sign out' }).click();
-  await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Send me a code' })).toBeVisible();
 });
 
 test('an admin can change a user role and change it back', async ({ page }) => {
