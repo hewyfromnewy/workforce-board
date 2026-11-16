@@ -86,7 +86,7 @@ function GridCell({ label, note, tags, operatorName, onDrop, onUnassign, onNote 
       aria-label={label}
       className={`border border-gray-300 p-2 align-top ${isOver ? 'bg-blue-50 border-blue-400' : 'bg-white'}`}
     >
-      <div className="flex flex-wrap gap-1.5 min-h-[44px]">
+      <div className="flex flex-col items-start gap-1.5 min-h-[44px]">
         {tags.map(tag => (
           <DraggableTag key={tag.id} tag={tag} compact operator={operatorName(tag)} onRemove={() => onUnassign(tag.id)} />
         ))}

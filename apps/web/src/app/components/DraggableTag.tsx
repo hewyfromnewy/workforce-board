@@ -40,7 +40,7 @@ export function DraggableTag({ tag, compact, operator, onRemove }: DraggableTagP
       }`}
     >
       <span className="flex flex-col leading-tight">
-        <span className="font-medium">{tag.name}</span>
+        <span className="font-medium whitespace-nowrap">{tag.name}</span>
         {operator && <span className="font-normal opacity-75 text-[0.85em]">{operator}</span>}
       </span>
       {onRemove && canEdit && (
