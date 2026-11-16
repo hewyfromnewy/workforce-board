@@ -13,6 +13,16 @@ const topics: { question: string; answer: string }[] = [
       'Drag their tag from "Not on the roster" into a cell. The row is the location and the column is the category. Dropping a tag somewhere else moves it. A tag can only be in one place on a day.',
   },
   {
+    question: 'How do I find someone in "Not on the roster"?',
+    answer:
+      'Type part of their name in the search box at the top of that list. Clear the box to see everyone again.',
+  },
+  {
+    question: 'How do I get more room for the board?',
+    answer:
+      'Use the arrows at the top of the menu to shrink it to icons. Use them again to bring the names back. The board remembers your choice.',
+  },
+  {
     question: 'How do I take someone off the board?',
     answer:
       'Use the small cross on their tag, or drag the tag back into "Not on the roster".',
