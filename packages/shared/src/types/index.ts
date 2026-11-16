@@ -22,6 +22,7 @@ export interface Assignment {
   tagId: string;
   categoryId: string;
   jobId: string;
+  onTagId?: string;
 }
 
 export interface SentRecord {

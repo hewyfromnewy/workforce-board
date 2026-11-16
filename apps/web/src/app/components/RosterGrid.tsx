@@ -13,19 +13,20 @@ interface RosterGridProps {
   tagById: Map<string, Tag>;
   onAssign: (tagId: string, categoryId: string, jobId: string) => void;
   onUnassign: (tagId: string) => void;
+  onCrew: (tagId: string, assetId: string) => void;
   onNote: (jobId: string, categoryId: string, text: string) => void;
 }
 
-export function RosterGrid({ categories, jobs, assignments, notes, tagById, onAssign, onUnassign, onNote }: RosterGridProps) {
+export function RosterGrid({ categories, jobs, assignments, notes, tagById, onAssign, onUnassign, onCrew, onNote }: RosterGridProps) {
   return (
-    <table className="border-collapse w-full">
+    <table className="border-separate border-spacing-0 w-full">
       <thead>
         <tr>
-          <th scope="col" className="sticky left-0 z-10 bg-gray-800 text-white px-3 py-2 text-left font-semibold text-sm border border-gray-700 min-w-[110px]">
+          <th scope="col" className="sticky top-0 left-0 z-30 bg-gray-800 text-white px-3 py-2 text-left font-semibold text-sm border border-gray-700 min-w-[110px]">
             LOCATION
           </th>
           {categories.map(category => (
-            <th key={category.id} scope="col" className="bg-gray-800 text-white px-2 py-2 text-center font-semibold text-xs border border-gray-700 min-w-[100px]">
+            <th key={category.id} scope="col" className="sticky top-0 z-20 bg-gray-800 text-white px-2 py-2 text-center font-semibold text-xs border border-gray-700 min-w-[100px]">
               {category.name}
             </th>
           ))}
@@ -44,11 +45,20 @@ export function RosterGrid({ categories, jobs, assignments, notes, tagById, onAs
                 key={category.id}
                 label={`${job.name}${job.jobNumber ? ` ${job.jobNumber}` : ''} ${category.name}`}
                 note={notes[noteKey(job.id, category.id)] ?? ''}
+                crewOf={tagId => assignments.filter(a => a.onTagId === tagId).map(a => tagById.get(a.tagId)!)}
+                onPlant={
+                  category.id === 'personnel'
+                    ? assignments
+                        .filter(a => a.jobId === job.id && a.onTagId)
+                        .map(a => ({ person: tagById.get(a.tagId)!, plant: tagById.get(a.onTagId!)! }))
+                    : []
+                }
                 tags={assignments
-                  .filter(a => a.jobId === job.id && a.categoryId === category.id)
+                  .filter(a => a.jobId === job.id && a.categoryId === category.id && !a.onTagId)
                   .map(a => tagById.get(a.tagId)!)}
                 onDrop={tagId => onAssign(tagId, category.id, job.id)}
                 onUnassign={onUnassign}
+                onCrew={onCrew}
                 onNote={text => onNote(job.id, category.id, text)}
               />
             ))}
@@ -63,18 +73,23 @@ interface GridCellProps {
   label: string;
   note: string;
   tags: Tag[];
+  onPlant: { person: Tag; plant: Tag }[];
+  crewOf: (tagId: string) => Tag[];
   onDrop: (tagId: string) => void;
   onUnassign: (tagId: string) => void;
+  onCrew: (tagId: string, assetId: string) => void;
   onNote: (text: string) => void;
 }
 
-function GridCell({ label, note, tags, onDrop, onUnassign, onNote }: GridCellProps) {
+function GridCell({ label, note, tags, onPlant, crewOf, onDrop, onUnassign, onCrew, onNote }: GridCellProps) {
   const [editing, setEditing] = useState(false);
   const { can } = useAccess();
   const canEdit = can('roster.edit');
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'TAG',
-    drop: (item: { id: string }) => onDrop(item.id),
+    drop: (item: { id: string }, monitor) => {
+      if (!monitor.didDrop()) onDrop(item.id);
+    },
     collect: monitor => ({ isOver: monitor.isOver() }),
   }));
 
@@ -84,9 +99,20 @@ function GridCell({ label, note, tags, onDrop, onUnassign, onNote }: GridCellPro
       aria-label={label}
       className={`border border-gray-300 p-2 align-top ${isOver ? 'bg-blue-50 border-blue-400' : 'bg-white'}`}
     >
-      <div className="flex flex-wrap gap-1.5 min-h-[44px]">
+      <div className="flex flex-col items-start gap-1.5 min-h-[44px]">
         {tags.map(tag => (
-          <DraggableTag key={tag.id} tag={tag} compact onRemove={() => onUnassign(tag.id)} />
+          <DraggableTag
+            key={tag.id}
+            tag={tag}
+            compact
+            crew={tag.type === 'member' ? undefined : crewOf(tag.id)}
+            onCrewDrop={personId => onCrew(personId, tag.id)}
+            onCrewRemove={onUnassign}
+            onRemove={() => onUnassign(tag.id)}
+          />
+        ))}
+        {onPlant.map(({ person, plant }) => (
+          <DraggableTag key={person.id} tag={person} compact via={plant.name} />
         ))}
       </div>
       {editing ? (

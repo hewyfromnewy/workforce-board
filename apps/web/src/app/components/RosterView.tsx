@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { addDays, format, isToday, parseISO } from 'date-fns';
-import { ChevronLeft, ChevronRight, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Copy, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { DEFAULT_CATEGORIES } from '@workforce/shared';
 import { useAccess } from '@/app/access';
 import { rosterText } from '@/app/rosterText';
 import { dayKey, statusOf } from '@/app/store';
 import type { StoreApi } from '@/app/store';
+import { CopyDayDialog } from './CopyDayDialog';
 import { HoldingArea } from './HoldingArea';
 import { RosterGrid } from './RosterGrid';
 import { SendDialog } from './SendDialog';
@@ -27,6 +28,7 @@ const navButton = 'p-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-
 
 export function RosterView({ api, date, onDateChange, onOpenManage, showTourPrompt, onStartTour, onDismissTourPrompt }: RosterViewProps) {
   const [sendOpen, setSendOpen] = useState(false);
+  const [copyOpen, setCopyOpen] = useState(false);
   const { can } = useAccess();
   const { store } = api;
   const key = dayKey(date);
@@ -85,6 +87,16 @@ export function RosterView({ api, date, onDateChange, onOpenManage, showTourProm
             Today
           </button>
         </div>
+        {can('roster.edit') && (
+          <button
+            type="button"
+            onClick={() => setCopyOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white hover:bg-gray-100"
+          >
+            <Copy className="w-4 h-4" aria-hidden />
+            Copy from another day
+          </button>
+        )}
         <div data-tour="send" className="flex items-center gap-3">
         <StatusBadge status={status} day={day} />
         {can('roster.send') && (
@@ -149,7 +161,7 @@ export function RosterView({ api, date, onDateChange, onOpenManage, showTourProm
       />
 
       <div className="flex-1 overflow-auto lg:overflow-hidden flex flex-col lg:flex-row gap-4 p-4">
-        <div data-tour="board" className="shrink-0 lg:shrink lg:flex-1 overflow-x-auto lg:overflow-auto bg-white rounded-lg shadow border border-gray-200 p-4">
+        <div data-tour="board" className="shrink-0 lg:shrink lg:flex-1 overflow-auto max-h-[75vh] lg:max-h-none bg-white rounded-lg shadow border border-gray-200">
           <RosterGrid
             categories={DEFAULT_CATEGORIES}
             jobs={store.jobs}
@@ -158,6 +170,7 @@ export function RosterView({ api, date, onDateChange, onOpenManage, showTourProm
             tagById={tagById}
             onAssign={(tagId, categoryId, jobId) => api.assign(key, tagId, categoryId, jobId)}
             onUnassign={tagId => api.unassign(key, tagId)}
+            onCrew={(tagId, assetId) => api.crew(key, tagId, assetId)}
             onNote={(jobId, categoryId, text) => api.setNote(key, jobId, categoryId, text)}
           />
         </div>
@@ -166,6 +179,17 @@ export function RosterView({ api, date, onDateChange, onOpenManage, showTourProm
         </>
       )}
 
+      <CopyDayDialog
+        open={copyOpen}
+        onOpenChange={setCopyOpen}
+        target={date}
+        hasContent={day.assignments.length > 0 || day.supervisorIds.length > 0 || Object.keys(day.notes).length > 0}
+        onCopy={async from => {
+          await api.copyDay(from, key);
+          setCopyOpen(false);
+          toast.success(`Copied the roster from ${format(parseISO(from), 'EEEE d MMMM')}`);
+        }}
+      />
       <SendDialog open={sendOpen} onOpenChange={setSendOpen} text={text} onSend={send} />
     </div>
   );
