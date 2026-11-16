@@ -23,6 +23,16 @@ const topics: { question: string; answer: string }[] = [
       'Select "+ note" at the bottom of a cell, type, and press Enter. Select the note again to change it. Clear the text to remove it.',
   },
   {
+    question: 'How do I copy yesterday\'s roster?',
+    answer:
+      'Choose "Copy from another day" next to the date. It starts from the day before; pick a different date if you need to, such as last Friday for a Monday. If the day already has a roster, the copy replaces it.',
+  },
+  {
+    question: 'How do I link an operator to a plant item?',
+    answer:
+      'In Manage, find the asset and choose a team member from its Operator list. The operator\'s name then shows beside the asset on the board and in the message you send.',
+  },
+  {
     question: 'How do I name the supervisors for the day?',
     answer: 'Drag them onto the Supervisors line, above the board. They appear first in the message when you send.',
   },

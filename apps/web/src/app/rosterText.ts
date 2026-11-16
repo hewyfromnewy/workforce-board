@@ -14,7 +14,11 @@ export function rosterText(date: Date, day: RosterDay, tags: Tag[], jobs: Job[])
     const rows = DEFAULT_CATEGORIES.map(cat => {
       const names = day.assignments
         .filter(a => a.jobId === job.id && a.categoryId === cat.id)
-        .map(a => tagById.get(a.tagId)!.name);
+        .map(a => {
+          const tag = tagById.get(a.tagId)!;
+          const operator = tag.operatorId ? tagById.get(tag.operatorId)?.name : undefined;
+          return operator ? `${tag.name} (${operator})` : tag.name;
+        });
       const note = day.notes[noteKey(job.id, cat.id)];
       if (names.length === 0 && !note) return null;
       return `  ${cat.name}: ${[names.join(', '), note].filter(Boolean).join(' - ')}`;

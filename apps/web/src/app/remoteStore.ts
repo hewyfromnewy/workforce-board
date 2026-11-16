@@ -4,10 +4,12 @@ import type { Assignment, Job, RosterDay, SentRecord, Tag } from '@workforce/sha
 import { supabase } from './supabase';
 import {
   assignTo,
+  copiedFrom,
   dayOf,
   emptyDay,
   jobsAdded,
   noteOn,
+  operatorOn,
   parseJobLine,
   sentOn,
   snapshotOf,
@@ -23,6 +25,7 @@ interface TagRow {
   id: string;
   name: string;
   type: Tag['type'];
+  operator_id: string | null;
 }
 
 interface JobRow {
@@ -62,7 +65,7 @@ export function useRemoteStore(tenantId: string): StoreApi {
 
   const fetchMaster = async () => {
     const [tags, jobs] = await Promise.all([
-      supabase.from('tags').select('id, name, type').eq('tenant_id', tenantId).eq('active', true).order('name'),
+      supabase.from('tags').select('id, name, type, operator_id').eq('tenant_id', tenantId).eq('active', true).order('name'),
       supabase
         .from('jobs')
         .select('id, name, job_number, note')
@@ -71,8 +74,16 @@ export function useRemoteStore(tenantId: string): StoreApi {
         .order('sort_order')
         .order('created_at'),
     ]);
+    const activeIds = new Set((tags.data as TagRow[]).map(t => t.id));
     return {
-      tags: tags.data as TagRow[],
+      tags: (tags.data as TagRow[]).map(
+        (t): Tag => ({
+          id: t.id,
+          name: t.name,
+          type: t.type,
+          ...(t.operator_id && activeIds.has(t.operator_id) && { operatorId: t.operator_id }),
+        }),
+      ),
       jobs: (jobs.data as JobRow[]).map(toJob),
     };
   };
@@ -319,6 +330,41 @@ export function useRemoteStore(tenantId: string): StoreApi {
         setStore(before);
         save(supabase.from('jobs').update({ active: true }).eq('id', id));
       };
+    },
+    setOperator: (tagId, operatorId) => {
+      setStore(prev => operatorOn(prev, tagId, operatorId));
+      save(supabase.from('tags').update({ operator_id: operatorId }).eq('id', tagId));
+    },
+    copyDay: async (from, to) => {
+      const source = await fetchDay(from, storeRef.current);
+      const target = { tenant_id: tenantId, date: to };
+      setStore(prev => copiedFrom({ ...prev, days: { ...prev.days, [from]: source } }, from, to));
+      pending.current += 1;
+      const results = await Promise.all([
+        supabase.from('assignments').delete().eq('tenant_id', tenantId).eq('date', to),
+        supabase.from('cell_notes').delete().eq('tenant_id', tenantId).eq('date', to),
+      ]);
+      const inserts = await Promise.all([
+        supabase.from('roster_days').upsert({ ...target, supervisor_ids: source.supervisorIds }),
+        source.assignments.length === 0
+          ? { error: null }
+          : supabase.from('assignments').insert(
+              source.assignments.map(a => ({ ...target, tag_id: a.tagId, category_id: a.categoryId, job_id: a.jobId })),
+            ),
+        Object.keys(source.notes).length === 0
+          ? { error: null }
+          : supabase.from('cell_notes').insert(
+              Object.entries(source.notes).map(([key, text]) => {
+                const [jobId, categoryId] = key.split('|');
+                return { ...target, job_id: jobId, category_id: categoryId, text };
+              }),
+            ),
+      ]);
+      pending.current -= 1;
+      if ([...results, ...inserts].some(r => r.error)) {
+        toast.error('That change could not be saved. Reloading the latest roster.');
+        await reloadAll();
+      }
     },
     setOrgName: () => {},
     resetAll: () => {},

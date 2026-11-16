@@ -40,6 +40,8 @@ export interface StoreApi {
   addJobs: (lines: string[]) => BulkResult;
   updateJob: (id: string, change: Partial<Omit<Job, 'id'>>) => void;
   removeJob: (id: string) => () => void;
+  setOperator: (tagId: string, operatorId: string | null) => void;
+  copyDay: (from: string, to: string) => Promise<void>;
   setOrgName: (name: string) => void;
   resetAll: () => void;
 }
@@ -129,6 +131,25 @@ export const noteOn = (store: Store, date: string, jobId: string, categoryId: st
     return { ...day, notes: text === '' ? rest : { ...rest, [noteKey(jobId, categoryId)]: text } };
   });
 
+export const operatorOn = (store: Store, tagId: string, operatorId: string | null): Store => ({
+  ...store,
+  tags: store.tags.map(t => {
+    if (t.id !== tagId) return t;
+    const { operatorId: _removed, ...rest } = t;
+    return operatorId === null ? rest : { ...rest, operatorId };
+  }),
+});
+
+export const copiedFrom = (store: Store, from: string, to: string) => {
+  const source = dayOf(store, from);
+  return withDay(store, to, day => ({
+    ...day,
+    assignments: source.assignments,
+    notes: source.notes,
+    supervisorIds: source.supervisorIds,
+  }));
+};
+
 export const sentOn = (store: Store, date: string, sent: SentRecord) =>
   withDay(store, date, day => ({ ...day, sent }));
 
@@ -184,7 +205,13 @@ export function jobsAdded(store: Store, entries: { name: string; jobNumber: stri
 
 export const withoutTag = (store: Store, id: string): Store => ({
   ...store,
-  tags: store.tags.filter(t => t.id !== id),
+  tags: store.tags
+    .filter(t => t.id !== id)
+    .map(t => {
+      if (t.operatorId !== id) return t;
+      const { operatorId: _removed, ...rest } = t;
+      return rest;
+    }),
   days: Object.fromEntries(
     Object.entries(store.days).map(([k, d]) => [
       k,
@@ -285,6 +312,8 @@ export function useLocalStore(tenantId: string): StoreApi {
       setStore(prev => withoutJob(prev, id));
       return () => setStore(before);
     },
+    setOperator: (tagId, operatorId) => setStore(prev => operatorOn(prev, tagId, operatorId)),
+    copyDay: async (from, to) => setStore(prev => copiedFrom(prev, from, to)),
     setOrgName: orgName => setStore(prev => ({ ...prev, orgName })),
     resetAll: () => setStore(initialStore),
   };

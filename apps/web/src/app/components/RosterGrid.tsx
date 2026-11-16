@@ -18,14 +18,14 @@ interface RosterGridProps {
 
 export function RosterGrid({ categories, jobs, assignments, notes, tagById, onAssign, onUnassign, onNote }: RosterGridProps) {
   return (
-    <table className="border-collapse w-full">
+    <table className="border-separate border-spacing-0 w-full">
       <thead>
         <tr>
-          <th scope="col" className="sticky left-0 z-10 bg-gray-800 text-white px-3 py-2 text-left font-semibold text-sm border border-gray-700 min-w-[110px]">
+          <th scope="col" className="sticky top-0 left-0 z-30 bg-gray-800 text-white px-3 py-2 text-left font-semibold text-sm border border-gray-700 min-w-[110px]">
             LOCATION
           </th>
           {categories.map(category => (
-            <th key={category.id} scope="col" className="bg-gray-800 text-white px-2 py-2 text-center font-semibold text-xs border border-gray-700 min-w-[100px]">
+            <th key={category.id} scope="col" className="sticky top-0 z-20 bg-gray-800 text-white px-2 py-2 text-center font-semibold text-xs border border-gray-700 min-w-[100px]">
               {category.name}
             </th>
           ))}
@@ -44,6 +44,7 @@ export function RosterGrid({ categories, jobs, assignments, notes, tagById, onAs
                 key={category.id}
                 label={`${job.name}${job.jobNumber ? ` ${job.jobNumber}` : ''} ${category.name}`}
                 note={notes[noteKey(job.id, category.id)] ?? ''}
+                operatorName={tag => (tag.operatorId ? tagById.get(tag.operatorId)?.name : undefined)}
                 tags={assignments
                   .filter(a => a.jobId === job.id && a.categoryId === category.id)
                   .map(a => tagById.get(a.tagId)!)}
@@ -63,12 +64,13 @@ interface GridCellProps {
   label: string;
   note: string;
   tags: Tag[];
+  operatorName: (tag: Tag) => string | undefined;
   onDrop: (tagId: string) => void;
   onUnassign: (tagId: string) => void;
   onNote: (text: string) => void;
 }
 
-function GridCell({ label, note, tags, onDrop, onUnassign, onNote }: GridCellProps) {
+function GridCell({ label, note, tags, operatorName, onDrop, onUnassign, onNote }: GridCellProps) {
   const [editing, setEditing] = useState(false);
   const { can } = useAccess();
   const canEdit = can('roster.edit');
@@ -86,7 +88,7 @@ function GridCell({ label, note, tags, onDrop, onUnassign, onNote }: GridCellPro
     >
       <div className="flex flex-wrap gap-1.5 min-h-[44px]">
         {tags.map(tag => (
-          <DraggableTag key={tag.id} tag={tag} compact onRemove={() => onUnassign(tag.id)} />
+          <DraggableTag key={tag.id} tag={tag} compact operator={operatorName(tag)} onRemove={() => onUnassign(tag.id)} />
         ))}
       </div>
       {editing ? (

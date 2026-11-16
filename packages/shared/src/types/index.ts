@@ -4,6 +4,7 @@ export interface Tag {
   id: string;
   name: string;
   type: TagType;
+  operatorId?: string;
 }
 
 export interface Category {
