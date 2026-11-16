@@ -39,8 +39,10 @@ export function DraggableTag({ tag, compact, operator, onRemove }: DraggableTagP
         isDragging ? 'opacity-40' : ''
       }`}
     >
-      <span className="font-medium">{tag.name}</span>
-      {operator && <span className="font-normal opacity-80">· {operator}</span>}
+      <span className="flex flex-col leading-tight">
+        <span className="font-medium">{tag.name}</span>
+        {operator && <span className="font-normal opacity-75 text-[0.85em]">{operator}</span>}
+      </span>
       {onRemove && canEdit && (
         <button
           type="button"
