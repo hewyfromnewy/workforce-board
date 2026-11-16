@@ -69,7 +69,6 @@ function TagSection({ api, type, title, noun, icon }: TagSectionProps) {
   const [name, setName] = useState('');
   const id = `add-${noun.replace(/\s/g, '-')}`;
   const items = api.store.tags.filter(t => t.type === type);
-  const members = api.store.tags.filter(t => t.type === 'member');
 
   const add = (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,22 +109,7 @@ function TagSection({ api, type, title, noun, icon }: TagSectionProps) {
         <ul className="divide-y divide-gray-100">
           {items.map(tag => (
             <li key={tag.id} className="flex items-center justify-between py-2">
-              <span className="mr-auto">{tag.name}</span>
-              {type === 'asset' && (
-                <>
-                  <select
-                    aria-label={`Operator for ${tag.name}`}
-                    value={tag.operatorId ?? ''}
-                    onChange={e => api.setOperator(tag.id, e.target.value || null)}
-                    className="px-2 py-1 text-sm border border-gray-300 rounded-lg bg-white"
-                  >
-                    <option value="">No operator</option>
-                    {members.map(m => (
-                      <option key={m.id} value={m.id}>{m.name}</option>
-                    ))}
-                  </select>
-                </>
-              )}
+              <span>{tag.name}</span>
               <button type="button" onClick={() => remove(tag)} aria-label={`Remove ${tag.name}`} className="p-2 text-gray-500 hover:text-red-600">
                 <Trash2 className="w-4 h-4" aria-hidden />
               </button>

@@ -170,10 +170,11 @@ export function RosterView({ api, date, onDateChange, onOpenManage, showTourProm
             tagById={tagById}
             onAssign={(tagId, categoryId, jobId) => api.assign(key, tagId, categoryId, jobId)}
             onUnassign={tagId => api.unassign(key, tagId)}
+            onCrew={(tagId, assetId) => api.crew(key, tagId, assetId)}
             onNote={(jobId, categoryId, text) => api.setNote(key, jobId, categoryId, text)}
           />
         </div>
-        <HoldingArea tags={waiting} tagById={tagById} onUnassign={tagId => api.unassign(key, tagId)} />
+        <HoldingArea tags={waiting} onUnassign={tagId => api.unassign(key, tagId)} />
       </div>
         </>
       )}

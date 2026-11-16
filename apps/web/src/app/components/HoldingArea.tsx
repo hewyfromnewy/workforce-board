@@ -6,7 +6,6 @@ import { DraggableTag } from './DraggableTag';
 
 interface HoldingAreaProps {
   tags: Tag[];
-  tagById: Map<string, Tag>;
   onUnassign: (tagId: string) => void;
 }
 
@@ -16,7 +15,7 @@ const groups: { type: TagType; title: string }[] = [
   { type: 'hire', title: 'Hire and contractors' },
 ];
 
-export function HoldingArea({ tags, tagById, onUnassign }: HoldingAreaProps) {
+export function HoldingArea({ tags, onUnassign }: HoldingAreaProps) {
   const [query, setQuery] = useState('');
   const needle = query.trim().toLowerCase();
   const shown = needle === '' ? tags : tags.filter(t => t.name.toLowerCase().includes(needle));
@@ -69,7 +68,7 @@ export function HoldingArea({ tags, tagById, onUnassign }: HoldingAreaProps) {
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {items.map(tag => (
-                      <DraggableTag key={tag.id} tag={tag} operator={tag.operatorId ? tagById.get(tag.operatorId)?.name : undefined} />
+                      <DraggableTag key={tag.id} tag={tag} />
                     ))}
                   </div>
                 </div>

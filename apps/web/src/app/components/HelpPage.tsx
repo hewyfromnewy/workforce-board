@@ -38,9 +38,9 @@ const topics: { question: string; answer: string }[] = [
       'Choose "Copy from another day" next to the date. It starts from the day before; pick a different date if you need to, such as last Friday for a Monday. If the day already has a roster, the copy replaces it.',
   },
   {
-    question: 'How do I link an operator to a plant item?',
+    question: 'How do I put an operator on a plant item?',
     answer:
-      'In Manage, find the asset and choose a team member from its Operator list. The operator\'s name then shows beside the asset on the board and in the message you send.',
+      'First drag the plant item into a cell. It then shows a "Drop a person here" slot. Drag a team member onto that slot. Each person you add gets their own line, so a truck can have a driver and an offsider. Moving the plant item moves its people with it, and taking it off the board returns them to "Not on the roster". The message you send lists them in brackets after the item.',
   },
   {
     question: 'How do I name the supervisors for the day?',

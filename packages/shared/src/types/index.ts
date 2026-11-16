@@ -4,7 +4,6 @@ export interface Tag {
   id: string;
   name: string;
   type: TagType;
-  operatorId?: string;
 }
 
 export interface Category {
@@ -23,6 +22,7 @@ export interface Assignment {
   tagId: string;
   categoryId: string;
   jobId: string;
+  onTagId?: string;
 }
 
 export interface SentRecord {

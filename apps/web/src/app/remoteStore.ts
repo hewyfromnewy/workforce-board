@@ -5,11 +5,11 @@ import { supabase } from './supabase';
 import {
   assignTo,
   copiedFrom,
+  crewTo,
   dayOf,
   emptyDay,
   jobsAdded,
   noteOn,
-  operatorOn,
   parseJobLine,
   sentOn,
   snapshotOf,
@@ -25,7 +25,6 @@ interface TagRow {
   id: string;
   name: string;
   type: Tag['type'];
-  operator_id: string | null;
 }
 
 interface JobRow {
@@ -65,7 +64,7 @@ export function useRemoteStore(tenantId: string): StoreApi {
 
   const fetchMaster = async () => {
     const [tags, jobs] = await Promise.all([
-      supabase.from('tags').select('id, name, type, operator_id').eq('tenant_id', tenantId).eq('active', true).order('name'),
+      supabase.from('tags').select('id, name, type').eq('tenant_id', tenantId).eq('active', true).order('name'),
       supabase
         .from('jobs')
         .select('id, name, job_number, note')
@@ -74,16 +73,8 @@ export function useRemoteStore(tenantId: string): StoreApi {
         .order('sort_order')
         .order('created_at'),
     ]);
-    const activeIds = new Set((tags.data as TagRow[]).map(t => t.id));
     return {
-      tags: (tags.data as TagRow[]).map(
-        (t): Tag => ({
-          id: t.id,
-          name: t.name,
-          type: t.type,
-          ...(t.operator_id && activeIds.has(t.operator_id) && { operatorId: t.operator_id }),
-        }),
-      ),
+      tags: tags.data as TagRow[],
       jobs: (jobs.data as JobRow[]).map(toJob),
     };
   };
@@ -91,7 +82,7 @@ export function useRemoteStore(tenantId: string): StoreApi {
   const fetchDay = async (date: string, master: { tags: Tag[]; jobs: Job[] }): Promise<RosterDay> => {
     const [days, assigns, notes, send] = await Promise.all([
       supabase.from('roster_days').select('supervisor_ids').eq('tenant_id', tenantId).eq('date', date).maybeSingle(),
-      supabase.from('assignments').select('tag_id, category_id, job_id').eq('tenant_id', tenantId).eq('date', date),
+      supabase.from('assignments').select('tag_id, category_id, job_id, on_tag_id').eq('tenant_id', tenantId).eq('date', date),
       supabase.from('cell_notes').select('job_id, category_id, text').eq('tenant_id', tenantId).eq('date', date),
       supabase
         .from('roster_sends')
@@ -104,9 +95,16 @@ export function useRemoteStore(tenantId: string): StoreApi {
     ]);
     const tagIds = new Set(master.tags.map(t => t.id));
     const jobIds = new Set(master.jobs.map(j => j.id));
-    const assignments: Assignment[] = (assigns.data as { tag_id: string; category_id: string; job_id: string }[])
-      .filter(a => tagIds.has(a.tag_id) && jobIds.has(a.job_id))
-      .map(a => ({ tagId: a.tag_id, categoryId: a.category_id, jobId: a.job_id }));
+    const assignments: Assignment[] = (
+      assigns.data as { tag_id: string; category_id: string; job_id: string; on_tag_id: string | null }[]
+    )
+      .filter(a => tagIds.has(a.tag_id) && jobIds.has(a.job_id) && (!a.on_tag_id || tagIds.has(a.on_tag_id)))
+      .map(a => ({
+        tagId: a.tag_id,
+        categoryId: a.category_id,
+        jobId: a.job_id,
+        ...(a.on_tag_id && { onTagId: a.on_tag_id }),
+      }));
     const supervisorRow = days.data as { supervisor_ids: string[] } | null;
     const sendRow = send.data as SendRow | null;
     return {
@@ -200,9 +198,17 @@ export function useRemoteStore(tenantId: string): StoreApi {
         supabase
           .from('assignments')
           .upsert(
-            { tenant_id: tenantId, date, tag_id: tagId, category_id: categoryId, job_id: jobId },
+            { tenant_id: tenantId, date, tag_id: tagId, category_id: categoryId, job_id: jobId, on_tag_id: null },
             { onConflict: 'tenant_id,date,tag_id' },
           ),
+      );
+      save(
+        supabase
+          .from('assignments')
+          .update({ category_id: categoryId, job_id: jobId })
+          .eq('tenant_id', tenantId)
+          .eq('date', date)
+          .eq('on_tag_id', tagId),
       );
       if (wasSupervisor) saveSupervisors(date, day(date).supervisorIds.filter(id => id !== tagId));
     },
@@ -212,10 +218,36 @@ export function useRemoteStore(tenantId: string): StoreApi {
       save(supabase.from('assignments').delete().eq('tenant_id', tenantId).eq('date', date).eq('tag_id', tagId));
       saveSupervisors(date, ids);
     },
+    crew: (date, tagId, assetId) => {
+      const asset = day(date).assignments.find(a => a.tagId === assetId)!;
+      const wasSupervisor = day(date).supervisorIds.includes(tagId);
+      setStore(prev => crewTo(prev, date, tagId, assetId));
+      save(
+        supabase.from('assignments').upsert(
+          {
+            tenant_id: tenantId,
+            date,
+            tag_id: tagId,
+            category_id: asset.categoryId,
+            job_id: asset.jobId,
+            on_tag_id: assetId,
+          },
+          { onConflict: 'tenant_id,date,tag_id' },
+        ),
+      );
+      if (wasSupervisor) saveSupervisors(date, day(date).supervisorIds.filter(id => id !== tagId));
+    },
     unassign: (date, tagId) => {
       const wasSupervisor = day(date).supervisorIds.includes(tagId);
       setStore(prev => unassignFrom(prev, date, tagId));
-      save(supabase.from('assignments').delete().eq('tenant_id', tenantId).eq('date', date).eq('tag_id', tagId));
+      save(
+        supabase
+          .from('assignments')
+          .delete()
+          .eq('tenant_id', tenantId)
+          .eq('date', date)
+          .or(`tag_id.eq.${tagId},on_tag_id.eq.${tagId}`),
+      );
       if (wasSupervisor) saveSupervisors(date, day(date).supervisorIds.filter(id => id !== tagId));
     },
     setNote: (date, jobId, categoryId, text) => {
@@ -331,10 +363,6 @@ export function useRemoteStore(tenantId: string): StoreApi {
         save(supabase.from('jobs').update({ active: true }).eq('id', id));
       };
     },
-    setOperator: (tagId, operatorId) => {
-      setStore(prev => operatorOn(prev, tagId, operatorId));
-      save(supabase.from('tags').update({ operator_id: operatorId }).eq('id', tagId));
-    },
     copyDay: async (from, to) => {
       const source = await fetchDay(from, storeRef.current);
       const target = { tenant_id: tenantId, date: to };
@@ -349,7 +377,13 @@ export function useRemoteStore(tenantId: string): StoreApi {
         source.assignments.length === 0
           ? { error: null }
           : supabase.from('assignments').insert(
-              source.assignments.map(a => ({ ...target, tag_id: a.tagId, category_id: a.categoryId, job_id: a.jobId })),
+              source.assignments.map(a => ({
+                ...target,
+                tag_id: a.tagId,
+                category_id: a.categoryId,
+                job_id: a.jobId,
+                on_tag_id: a.onTagId ?? null,
+              })),
             ),
         Object.keys(source.notes).length === 0
           ? { error: null }

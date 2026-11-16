@@ -30,6 +30,7 @@ export interface StoreApi {
   loadHistory: () => void;
   assign: (date: string, tagId: string, categoryId: string, jobId: string) => void;
   setSupervisor: (date: string, tagId: string) => void;
+  crew: (date: string, tagId: string, assetId: string) => void;
   unassign: (date: string, tagId: string) => void;
   setNote: (date: string, jobId: string, categoryId: string, text: string) => void;
   markSent: (date: string) => void;
@@ -40,7 +41,6 @@ export interface StoreApi {
   addJobs: (lines: string[]) => BulkResult;
   updateJob: (id: string, change: Partial<Omit<Job, 'id'>>) => void;
   removeJob: (id: string) => () => void;
-  setOperator: (tagId: string, operatorId: string | null) => void;
   copyDay: (from: string, to: string) => Promise<void>;
   setOrgName: (name: string) => void;
   resetAll: () => void;
@@ -87,7 +87,7 @@ type Plan = Pick<RosterDay, 'assignments' | 'notes' | 'supervisorIds'>;
 
 export const signature = (plan: Plan) =>
   JSON.stringify([
-    plan.assignments.map(a => `${a.tagId}|${a.categoryId}|${a.jobId}`).sort(),
+    plan.assignments.map(a => `${a.tagId}|${a.categoryId}|${a.jobId}|${a.onTagId ?? ''}`).sort(),
     Object.entries(plan.notes).filter(([, text]) => text !== '').map(([k, text]) => `${k}=${text}`).sort(),
     [...plan.supervisorIds].sort(),
   ]);
@@ -108,14 +108,30 @@ export const assignTo = (store: Store, date: string, tagId: string, categoryId: 
   withDay(store, date, day => ({
     ...day,
     supervisorIds: day.supervisorIds.filter(id => id !== tagId),
-    assignments: [...day.assignments.filter(a => a.tagId !== tagId), { tagId, categoryId, jobId }],
+    assignments: [
+      ...day.assignments.filter(a => a.tagId !== tagId).map(a => (a.onTagId === tagId ? { ...a, categoryId, jobId } : a)),
+      { tagId, categoryId, jobId },
+    ],
   }));
+
+export const crewTo = (store: Store, date: string, tagId: string, assetId: string) =>
+  withDay(store, date, day => {
+    const asset = day.assignments.find(a => a.tagId === assetId)!;
+    return {
+      ...day,
+      supervisorIds: day.supervisorIds.filter(id => id !== tagId),
+      assignments: [
+        ...day.assignments.filter(a => a.tagId !== tagId),
+        { tagId, categoryId: asset.categoryId, jobId: asset.jobId, onTagId: assetId },
+      ],
+    };
+  });
 
 export const unassignFrom = (store: Store, date: string, tagId: string) =>
   withDay(store, date, day => ({
     ...day,
     supervisorIds: day.supervisorIds.filter(id => id !== tagId),
-    assignments: day.assignments.filter(a => a.tagId !== tagId),
+    assignments: day.assignments.filter(a => a.tagId !== tagId && a.onTagId !== tagId),
   }));
 
 export const supervisorOn = (store: Store, date: string, tagId: string) =>
@@ -130,15 +146,6 @@ export const noteOn = (store: Store, date: string, jobId: string, categoryId: st
     const { [noteKey(jobId, categoryId)]: _removed, ...rest } = day.notes;
     return { ...day, notes: text === '' ? rest : { ...rest, [noteKey(jobId, categoryId)]: text } };
   });
-
-export const operatorOn = (store: Store, tagId: string, operatorId: string | null): Store => ({
-  ...store,
-  tags: store.tags.map(t => {
-    if (t.id !== tagId) return t;
-    const { operatorId: _removed, ...rest } = t;
-    return operatorId === null ? rest : { ...rest, operatorId };
-  }),
-});
 
 export const copiedFrom = (store: Store, from: string, to: string) => {
   const source = dayOf(store, from);
@@ -205,20 +212,14 @@ export function jobsAdded(store: Store, entries: { name: string; jobNumber: stri
 
 export const withoutTag = (store: Store, id: string): Store => ({
   ...store,
-  tags: store.tags
-    .filter(t => t.id !== id)
-    .map(t => {
-      if (t.operatorId !== id) return t;
-      const { operatorId: _removed, ...rest } = t;
-      return rest;
-    }),
+  tags: store.tags.filter(t => t.id !== id),
   days: Object.fromEntries(
     Object.entries(store.days).map(([k, d]) => [
       k,
       {
         ...d,
         supervisorIds: d.supervisorIds.filter(s => s !== id),
-        assignments: d.assignments.filter(a => a.tagId !== id),
+        assignments: d.assignments.filter(a => a.tagId !== id && a.onTagId !== id),
       },
     ]),
   ),
@@ -272,6 +273,7 @@ export function useLocalStore(tenantId: string): StoreApi {
     loadHistory: () => {},
     assign: (date, tagId, categoryId, jobId) => setStore(prev => assignTo(prev, date, tagId, categoryId, jobId)),
     setSupervisor: (date, tagId) => setStore(prev => supervisorOn(prev, date, tagId)),
+    crew: (date, tagId, assetId) => setStore(prev => crewTo(prev, date, tagId, assetId)),
     unassign: (date, tagId) => setStore(prev => unassignFrom(prev, date, tagId)),
     setNote: (date, jobId, categoryId, text) => setStore(prev => noteOn(prev, date, jobId, categoryId, text)),
     markSent: date =>
@@ -312,7 +314,6 @@ export function useLocalStore(tenantId: string): StoreApi {
       setStore(prev => withoutJob(prev, id));
       return () => setStore(before);
     },
-    setOperator: (tagId, operatorId) => setStore(prev => operatorOn(prev, tagId, operatorId)),
     copyDay: async (from, to) => setStore(prev => copiedFrom(prev, from, to)),
     setOrgName: orgName => setStore(prev => ({ ...prev, orgName })),
     resetAll: () => setStore(initialStore),
