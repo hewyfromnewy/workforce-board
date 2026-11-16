@@ -8,13 +8,14 @@ A supervisor puts a plant item on the board, then drags team members onto it to 
 
 ## Steps covered
 
-1. Drop two people onto an excavator. Both sit inside it, one under the other, and are gone from "Not on the roster" and from the PERSONNEL cell.
-2. Move the excavator to another location. Its people move with it. The Send message reads "Excavator #1 (John Smith)".
+1. Drop two people onto an excavator. Both sit inside it, one under the other, and are gone from "Not on the roster". They also show in the PERSONNEL column of that location as "John Smith on Excavator #1", so the personnel list stays complete.
+2. Move the excavator to another location. Its people and their PERSONNEL entries move with it. The Send message reads "Excavator #1 (John Smith)" and lists "John Smith (on Excavator #1)" under PERSONNEL.
 3. Use the cross on a person inside the excavator. They return to the waiting list and the other person stays. Take the excavator off the board. Everyone left in it returns to the waiting list.
 
 ## What a regression looks like
 
-- A person shown both inside a plant item and in a cell or the waiting list.
+- A person shown inside a plant item and in the waiting list, or twice in the Send message's people total.
+- The PERSONNEL entry missing, left behind when the plant item moves, or still there after the person is removed.
 - People left behind in the old cell when the plant item moves, or lost when it is removed.
 - Two people on the same line, so the row does not grow.
 - A drop on the slot landing in the cell instead of the plant item.

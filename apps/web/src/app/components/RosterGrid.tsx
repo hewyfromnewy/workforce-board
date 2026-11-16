@@ -46,6 +46,13 @@ export function RosterGrid({ categories, jobs, assignments, notes, tagById, onAs
                 label={`${job.name}${job.jobNumber ? ` ${job.jobNumber}` : ''} ${category.name}`}
                 note={notes[noteKey(job.id, category.id)] ?? ''}
                 crewOf={tagId => assignments.filter(a => a.onTagId === tagId).map(a => tagById.get(a.tagId)!)}
+                onPlant={
+                  category.id === 'personnel'
+                    ? assignments
+                        .filter(a => a.jobId === job.id && a.onTagId)
+                        .map(a => ({ person: tagById.get(a.tagId)!, plant: tagById.get(a.onTagId!)! }))
+                    : []
+                }
                 tags={assignments
                   .filter(a => a.jobId === job.id && a.categoryId === category.id && !a.onTagId)
                   .map(a => tagById.get(a.tagId)!)}
@@ -66,6 +73,7 @@ interface GridCellProps {
   label: string;
   note: string;
   tags: Tag[];
+  onPlant: { person: Tag; plant: Tag }[];
   crewOf: (tagId: string) => Tag[];
   onDrop: (tagId: string) => void;
   onUnassign: (tagId: string) => void;
@@ -73,7 +81,7 @@ interface GridCellProps {
   onNote: (text: string) => void;
 }
 
-function GridCell({ label, note, tags, crewOf, onDrop, onUnassign, onCrew, onNote }: GridCellProps) {
+function GridCell({ label, note, tags, onPlant, crewOf, onDrop, onUnassign, onCrew, onNote }: GridCellProps) {
   const [editing, setEditing] = useState(false);
   const { can } = useAccess();
   const canEdit = can('roster.edit');
@@ -102,6 +110,9 @@ function GridCell({ label, note, tags, crewOf, onDrop, onUnassign, onCrew, onNot
             onCrewRemove={onUnassign}
             onRemove={() => onUnassign(tag.id)}
           />
+        ))}
+        {onPlant.map(({ person, plant }) => (
+          <DraggableTag key={person.id} tag={person} compact via={plant.name} />
         ))}
       </div>
       {editing ? (

@@ -21,6 +21,8 @@ test('people dropped on a plant item sit inside it, one per line', async ({ page
   await expect(slots.locator('[data-tag="Sarah Johnson"]')).toBeVisible();
   await expect(waiting(page).locator('[data-tag="John Smith"]')).toHaveCount(0);
   await expect(cell(page, 'North Depot', 'PERSONNEL').locator('[data-tag="John Smith"]')).toHaveCount(0);
+  await expect(cell(page, 'North Depot', 'PERSONNEL').locator('[data-mirror="John Smith"]')).toContainText('on Excavator #1');
+  await expect(cell(page, 'North Depot', 'PERSONNEL').locator('[data-mirror="Sarah Johnson"]')).toBeVisible();
 
   const first = (await slots.locator('[data-tag="John Smith"]').boundingBox())!;
   const second = (await slots.locator('[data-tag="Sarah Johnson"]').boundingBox())!;
@@ -35,8 +37,12 @@ test('moving the plant item moves its people, and the message lists them', async
   await expect(moved.getByRole('group', { name: 'People on Excavator #1' }).getByText('John Smith')).toBeVisible();
   await expect(cell(page, 'North Depot', 'PLANT').getByText('John Smith')).toHaveCount(0);
 
+  await expect(cell(page, 'River Road', 'PERSONNEL').locator('[data-mirror="John Smith"]')).toBeVisible();
+  await expect(cell(page, 'North Depot', 'PERSONNEL').locator('[data-mirror="John Smith"]')).toHaveCount(0);
+
   await page.getByRole('button', { name: 'Send', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Excavator #1 (John Smith)');
+  await expect(page.getByRole('dialog')).toContainText('John Smith (on Excavator #1)');
 });
 
 test('taking a person out, or the plant item off, returns them to the waiting list', async ({ page }) => {
@@ -44,7 +50,8 @@ test('taking a person out, or the plant item off, returns them to the waiting li
   await page.locator('[data-tag="John Smith"]').dragTo(slots);
   await page.locator('[data-tag="Sarah Johnson"]').dragTo(slots);
 
-  await page.getByRole('button', { name: 'Remove John Smith from roster' }).click();
+  await slots.getByRole('button', { name: 'Remove John Smith from roster' }).click();
+  await expect(cell(page, 'North Depot', 'PERSONNEL').locator('[data-mirror="John Smith"]')).toHaveCount(0);
   await expect(waiting(page).locator('[data-tag="John Smith"]')).toBeVisible();
   await expect(slots.locator('[data-tag="Sarah Johnson"]')).toBeVisible();
 

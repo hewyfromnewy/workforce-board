@@ -40,7 +40,7 @@ const topics: { question: string; answer: string }[] = [
   {
     question: 'How do I put an operator on a plant item?',
     answer:
-      'First drag the plant item into a cell. It then shows a "Drop a person here" slot. Drag a team member onto that slot. Each person you add gets their own line, so a truck can have a driver and an offsider. Moving the plant item moves its people with it, and taking it off the board returns them to "Not on the roster". The message you send lists them in brackets after the item.',
+      'First drag the plant item into a cell. It then shows a "Drop a person here" slot. Drag a team member onto that slot. Each person you add gets their own line, so a truck can have a driver and an offsider. They also show in the PERSONNEL column for that location, marked with the plant item they are on. Moving the plant item moves its people with it, and taking it off the board returns them to "Not on the roster". The message you send lists them in brackets after the item, and under PERSONNEL.',
   },
   {
     question: 'How do I name the supervisors for the day?',

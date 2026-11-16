@@ -7,6 +7,7 @@ interface DraggableTagProps {
   tag: Tag;
   compact?: boolean;
   crew?: Tag[];
+  via?: string;
   onCrewDrop?: (tagId: string) => void;
   onCrewRemove?: (tagId: string) => void;
   onRemove?: () => void;
@@ -23,7 +24,7 @@ const colours: Record<Tag['type'], string> = {
   hire: 'bg-white border-gray-400 text-gray-900',
 };
 
-export function DraggableTag({ tag, compact, crew, onCrewDrop, onCrewRemove, onRemove }: DraggableTagProps) {
+export function DraggableTag({ tag, compact, crew, via, onCrewDrop, onCrewRemove, onRemove }: DraggableTagProps) {
   const { can } = useAccess();
   const canEdit = can('roster.edit');
   const [{ isDragging }, drag] = useDrag(
@@ -53,13 +54,14 @@ export function DraggableTag({ tag, compact, crew, onCrewDrop, onCrewRemove, onR
         drag(node);
         drop(node);
       }}
-      data-tag={tag.name}
+      {...(via ? { 'data-mirror': tag.name } : { 'data-tag': tag.name })}
       className={`rounded border-2 ${crew ? 'flex flex-col items-stretch' : 'inline-flex items-center'} ${
         canEdit ? 'cursor-grab active:cursor-grabbing' : ''
       } ${size} ${colours[tag.type]} ${isDragging ? 'opacity-40' : ''}`}
     >
       <div className="flex items-center gap-1">
         <span className="font-medium whitespace-nowrap">{tag.name}</span>
+        {via && <span className="font-normal whitespace-nowrap opacity-75">on {via}</span>}
         {onRemove && canEdit && (
           <button
             type="button"
